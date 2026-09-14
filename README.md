@@ -9,7 +9,7 @@ This repository contains the completed project skeleton (Phases 1-3) along with 
 
 ---
 
-## 🚀 Quick Start Guide
+ Quick Start Guide
 
 ### 1. Database Setup
 You must initialize the database before running the application, as the login screen authenticates against MySQL.
@@ -37,7 +37,7 @@ This project is built using Maven. Since IntelliJ has built-in Maven support, yo
 
 ---
 
-## 🔐 Default Admin Account
+##  Default Admin Account
 A default admin account is created by the `schema.sql` script:
 
 * **Username:** `admin`
@@ -73,7 +73,7 @@ MySQL Database
 
 ---
 
-## 📝 Next Steps
+## Next Steps
 We have completed Phases 1 through 3, plus the Phase 4 and 5 foundations:
 - [x] Phase 1: SRS & Architecture Plan
 - [x] Phase 2: Database Schema & ER Design 
