@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.lifelink.controller.DonorDashboardController"
+      styleClass="login-root" alignment="CENTER" spacing="20"
+      style="-fx-padding:40; -fx-background-color:#0f1117;">
+    <Label text="🩸 Donor Dashboard" style="-fx-font-size:24; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+    <Label text="Full donor dashboard coming in Phase 7." style="-fx-text-fill:#8892b0;"/>
+    <Button text="Logout" styleClass="btn-danger" onAction="#handleLogout"/>
+</VBox>
