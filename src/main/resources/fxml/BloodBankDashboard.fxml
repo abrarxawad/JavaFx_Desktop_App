@@ -1,11 +1,218 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
-<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.lifelink.controller.BloodBankDashboardController"
-      styleClass="login-root" alignment="CENTER" spacing="20"
-      style="-fx-padding:40; -fx-background-color:#0f1117;">
-    <Label text="🏥 Blood Bank Dashboard" style="-fx-font-size:24; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
-    <Label text="Full blood bank dashboard coming in Phase 8." style="-fx-text-fill:#8892b0;"/>
-    <Button text="Logout" styleClass="btn-danger" onAction="#handleLogout"/>
-</VBox>
+<?import javafx.geometry.Insets?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.lifelink.controller.BloodBankDashboardController"
+            styleClass="main-border-pane">
+
+    <!-- ── Sidebar ── -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0">
+            <VBox styleClass="sidebar-brand" spacing="2">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="🏦" styleClass="sidebar-brand-icon"/>
+                    <VBox spacing="1">
+                        <Label text="LifeLink" styleClass="sidebar-brand-text"/>
+                        <Label text="Blood Bank Portal" styleClass="sidebar-brand-sub"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <Label text="NAVIGATION" styleClass="sidebar-section-label"/>
+            <Button text="📊  Overview"         styleClass="sidebar-nav-btn,sidebar-nav-btn-active" maxWidth="Infinity" onAction="#showOverview"/>
+            <Button text="🩸  Inventory"        styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showInventory"/>
+            <Button text="➕  Add Stock"         styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showAddStock"/>
+            <Button text="📋  Blood Requests"   styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showRequests"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+            <Label text="ACCOUNT" styleClass="sidebar-section-label"/>
+            <Button text="🚪  Logout" styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#handleLogout"/>
+            <VBox style="-fx-padding: 8;"/>
+        </VBox>
+    </left>
+
+    <!-- ── Topbar ── -->
+    <top>
+        <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+            <Label fx:id="topbarTitle" text="Inventory Overview" styleClass="topbar-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER_RIGHT" spacing="2">
+                <Label fx:id="topbarUserName" text="Blood Bank" styleClass="topbar-user-name"/>
+                <Label text="BLOOD BANK" styleClass="topbar-user-role"/>
+            </VBox>
+            <Button text="Logout" styleClass="topbar-logout-btn" onAction="#handleLogout"/>
+        </HBox>
+    </top>
+
+    <!-- ── Content ── -->
+    <center>
+        <StackPane fx:id="contentStack" styleClass="content-area">
+
+            <!-- ── OVERVIEW PANEL ── -->
+            <VBox fx:id="overviewPanel" spacing="20" visible="true">
+                <Label text="Blood Inventory Overview" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+
+                <!-- Blood group stat cards row 1 -->
+                <HBox spacing="12">
+                    <VBox styleClass="stat-card,stat-card-accent" spacing="6" HBox.hgrow="ALWAYS" minWidth="110">
+                        <Label text="🩸 A+" style="-fx-text-fill:#fc8181; -fx-font-size:16; -fx-font-weight:bold;"/>
+                        <Label fx:id="invAPos" text="0" styleClass="stat-card-value"/>
+                        <Label text="units" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card" spacing="6" HBox.hgrow="ALWAYS" minWidth="110">
+                        <Label text="🩸 A-" style="-fx-text-fill:#fc8181; -fx-font-size:16; -fx-font-weight:bold;"/>
+                        <Label fx:id="invANeg" text="0" styleClass="stat-card-value"/>
+                        <Label text="units" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-teal" spacing="6" HBox.hgrow="ALWAYS" minWidth="110">
+                        <Label text="🩸 B+" style="-fx-text-fill:#68d391; -fx-font-size:16; -fx-font-weight:bold;"/>
+                        <Label fx:id="invBPos" text="0" styleClass="stat-card-value"/>
+                        <Label text="units" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card" spacing="6" HBox.hgrow="ALWAYS" minWidth="110">
+                        <Label text="🩸 B-" style="-fx-text-fill:#68d391; -fx-font-size:16; -fx-font-weight:bold;"/>
+                        <Label fx:id="invBNeg" text="0" styleClass="stat-card-value"/>
+                        <Label text="units" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-warning" spacing="6" HBox.hgrow="ALWAYS" minWidth="110">
+                        <Label text="🩸 AB+" style="-fx-text-fill:#f6ad55; -fx-font-size:16; -fx-font-weight:bold;"/>
+                        <Label fx:id="invABPos" text="0" styleClass="stat-card-value"/>
+                        <Label text="units" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card" spacing="6" HBox.hgrow="ALWAYS" minWidth="110">
+                        <Label text="🩸 AB-" style="-fx-text-fill:#f6ad55; -fx-font-size:16; -fx-font-weight:bold;"/>
+                        <Label fx:id="invABNeg" text="0" styleClass="stat-card-value"/>
+                        <Label text="units" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-success" spacing="6" HBox.hgrow="ALWAYS" minWidth="110">
+                        <Label text="🩸 O+" style="-fx-text-fill:#63b3ed; -fx-font-size:16; -fx-font-weight:bold;"/>
+                        <Label fx:id="invOPos" text="0" styleClass="stat-card-value"/>
+                        <Label text="units" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card" spacing="6" HBox.hgrow="ALWAYS" minWidth="110">
+                        <Label text="🩸 O-" style="-fx-text-fill:#63b3ed; -fx-font-size:16; -fx-font-weight:bold;"/>
+                        <Label fx:id="invONeg" text="0" styleClass="stat-card-value"/>
+                        <Label text="units" styleClass="stat-card-label"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Quick actions -->
+                <VBox styleClass="stat-card" spacing="12">
+                    <Label text="Quick Actions" styleClass="section-header"/>
+                    <HBox spacing="12">
+                        <Button text="➕ Add Inventory"       styleClass="btn-primary"   onAction="#showAddStock"/>
+                        <Button text="📋 View Full Inventory" styleClass="btn-secondary" onAction="#showInventory"/>
+                        <Button text="🔄 Refresh"             styleClass="btn-secondary" onAction="#loadOverview"/>
+                    </HBox>
+                </VBox>
+
+                <Label fx:id="overviewStatus" text="" wrapText="true" style="-fx-text-fill:#8892b0;"/>
+            </VBox>
+
+            <!-- ── INVENTORY TABLE PANEL ── -->
+            <VBox fx:id="inventoryPanel" spacing="16" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="Blood Inventory" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Mark Expired" styleClass="btn-danger"    onAction="#handleMarkExpired"/>
+                    <Button text="Refresh"      styleClass="btn-secondary" onAction="#showInventory"/>
+                </HBox>
+
+                <TableView fx:id="inventoryTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="colInvId"       text="#"             prefWidth="60"/>
+                        <TableColumn fx:id="colInvGroup"    text="Blood Type"    prefWidth="110"/>
+                        <TableColumn fx:id="colInvQty"      text="Quantity"      prefWidth="90"/>
+                        <TableColumn fx:id="colInvCollect"  text="Collected"     prefWidth="120"/>
+                        <TableColumn fx:id="colInvExpiry"   text="Expires"       prefWidth="120"/>
+                        <TableColumn fx:id="colInvStatus"   text="Status"        prefWidth="120"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No inventory records. Add stock using 'Add Inventory'." style="-fx-text-fill:#4a5568;"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+
+            <!-- ── ADD STOCK PANEL ── -->
+            <VBox fx:id="addStockPanel" spacing="20" visible="false">
+                <Label text="Add Blood Inventory" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+
+                <VBox styleClass="stat-card" spacing="16" maxWidth="560">
+                    <Label text="New Stock Details" styleClass="section-header"/>
+
+                    <HBox spacing="16">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Blood Group *" styleClass="form-label"/>
+                            <ComboBox fx:id="addGroup" promptText="Blood group" maxWidth="Infinity" styleClass="combo-box">
+                                <items>
+                                    <FXCollections fx:factory="observableArrayList">
+                                        <String fx:value="A_POSITIVE"/>
+                                        <String fx:value="A_NEGATIVE"/>
+                                        <String fx:value="B_POSITIVE"/>
+                                        <String fx:value="B_NEGATIVE"/>
+                                        <String fx:value="AB_POSITIVE"/>
+                                        <String fx:value="AB_NEGATIVE"/>
+                                        <String fx:value="O_POSITIVE"/>
+                                        <String fx:value="O_NEGATIVE"/>
+                                    </FXCollections>
+                                </items>
+                            </ComboBox>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Quantity (units) *" styleClass="form-label"/>
+                            <TextField fx:id="addQuantity" styleClass="form-field" promptText="e.g. 10" text="1"/>
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="16">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Collection Date *" styleClass="form-label"/>
+                            <DatePicker fx:id="addCollectionDate" styleClass="form-field" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Expiry Date *" styleClass="form-label"/>
+                            <DatePicker fx:id="addExpiryDate" styleClass="form-field" maxWidth="Infinity"/>
+                        </VBox>
+                    </HBox>
+
+                    <Label fx:id="addStockStatus" text="" wrapText="true"/>
+
+                    <HBox spacing="12">
+                        <Button text="✅ Add to Inventory" styleClass="btn-primary"   onAction="#handleAddStock"/>
+                        <Button text="Cancel"              styleClass="btn-secondary" onAction="#showOverview"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+
+            <!-- ── BLOOD REQUESTS PANEL ── -->
+            <VBox fx:id="requestsPanel" spacing="16" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="Incoming Blood Requests" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Refresh" styleClass="btn-secondary" onAction="#showRequests"/>
+                </HBox>
+
+                <TableView fx:id="reqTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="colReqId"       text="#"          prefWidth="60"/>
+                        <TableColumn fx:id="colReqGroup"    text="Blood Type" prefWidth="110"/>
+                        <TableColumn fx:id="colReqQty"      text="Units"      prefWidth="80"/>
+                        <TableColumn fx:id="colReqPriority" text="Priority"   prefWidth="110"/>
+                        <TableColumn fx:id="colReqStatus"   text="Status"     prefWidth="150"/>
+                        <TableColumn fx:id="colReqBy"       text="Requester"  prefWidth="160"/>
+                        <TableColumn fx:id="colReqDate"     text="Date"       prefWidth="130"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No pending blood requests." style="-fx-text-fill:#4a5568;"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+
+        </StackPane>
+    </center>
+</BorderPane>

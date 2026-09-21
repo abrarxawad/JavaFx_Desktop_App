@@ -1,10 +1,201 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
-<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.lifelink.controller.AdminDashboardController"
-      styleClass="login-root" alignment="CENTER" spacing="20" style="-fx-padding:40;">
-    <Label text="🛡 Admin Dashboard" style="-fx-font-size:24; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
-    <Label text="Full dashboard coming in Phase 17." style="-fx-text-fill:#8892b0;"/>
-    <Button text="Logout" styleClass="btn-danger" onAction="#handleLogout"/>
-</VBox>
+<?import javafx.geometry.Insets?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.lifelink.controller.AdminDashboardController"
+            styleClass="main-border-pane">
+
+    <!-- ── Sidebar ── -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0">
+            <VBox styleClass="sidebar-brand" spacing="2">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="⚙️" styleClass="sidebar-brand-icon"/>
+                    <VBox spacing="1">
+                        <Label text="LifeLink" styleClass="sidebar-brand-text"/>
+                        <Label text="Admin Console" styleClass="sidebar-brand-sub"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <Label text="MANAGEMENT" styleClass="sidebar-section-label"/>
+            <Button text="📊  Overview"       styleClass="sidebar-nav-btn,sidebar-nav-btn-active" maxWidth="Infinity" onAction="#showOverview"/>
+            <Button text="👥  Users"          styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showUsers"/>
+            <Button text="📋  Requests"       styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showRequests"/>
+            <Button text="🩸  Inventory"      styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showInventory"/>
+            <Button text="🏥  Hospitals &amp; Banks" styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showFacilities"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+            <Label text="SYSTEM" styleClass="sidebar-section-label"/>
+            <Button text="🚪  Logout" styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#handleLogout"/>
+            <VBox style="-fx-padding: 8;"/>
+        </VBox>
+    </left>
+
+    <!-- ── Topbar ── -->
+    <top>
+        <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+            <Label fx:id="topbarTitle" text="System Overview" styleClass="topbar-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER_RIGHT" spacing="2">
+                <Label fx:id="topbarUserName" text="Admin" styleClass="topbar-user-name"/>
+                <Label text="ADMINISTRATOR" styleClass="topbar-user-role"/>
+            </VBox>
+            <Button text="Logout" styleClass="topbar-logout-btn" onAction="#handleLogout"/>
+        </HBox>
+    </top>
+
+    <!-- ── Content ── -->
+    <center>
+        <StackPane fx:id="contentStack" styleClass="content-area">
+
+            <!-- ── OVERVIEW PANEL ── -->
+            <VBox fx:id="overviewPanel" spacing="20" visible="true">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="System Dashboard" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="🔄 Refresh All" styleClass="btn-secondary" onAction="#loadOverviewStats"/>
+                </HBox>
+
+                <!-- Stat cards -->
+                <HBox spacing="16">
+                    <VBox styleClass="stat-card,stat-card-accent" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="👥" styleClass="stat-card-icon"/>
+                        <Label fx:id="statTotalUsers" text="0" styleClass="stat-card-value"/>
+                        <Label text="Total Users" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-warning" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="📋" styleClass="stat-card-icon"/>
+                        <Label fx:id="statActiveRequests" text="0" styleClass="stat-card-value"/>
+                        <Label text="Active Requests" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-teal" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="🩸" styleClass="stat-card-icon"/>
+                        <Label fx:id="statTotalDonations" text="0" styleClass="stat-card-value"/>
+                        <Label text="Total Donations" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-success" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="🏥" styleClass="stat-card-icon"/>
+                        <Label fx:id="statTotalFacilities" text="0" styleClass="stat-card-value"/>
+                        <Label text="Hospitals &amp; Banks" styleClass="stat-card-label"/>
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="16" VBox.vgrow="ALWAYS">
+                    <!-- Recent Activity or System Health (Mockup for now) -->
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <Label text="System Status" styleClass="section-header"/>
+                        <VBox spacing="10" style="-fx-padding: 10 0 0 0;">
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label text="🟢" style="-fx-font-size:16;"/>
+                                <Label text="Database Connection: OK" style="-fx-text-fill:#f0f4ff;"/>
+                            </HBox>
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label text="🟢" style="-fx-font-size:16;"/>
+                                <Label text="Authentication Service: OK" style="-fx-text-fill:#f0f4ff;"/>
+                            </HBox>
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label text="🟢" style="-fx-font-size:16;"/>
+                                <Label text="Background Jobs: Running" style="-fx-text-fill:#f0f4ff;"/>
+                            </HBox>
+                        </VBox>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- ── USERS PANEL ── -->
+            <VBox fx:id="usersPanel" spacing="16" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="User Management" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Delete Selected" styleClass="btn-danger" onAction="#handleDeleteUser"/>
+                    <Button text="Toggle Status" styleClass="btn-warning" onAction="#handleToggleUserStatus"/>
+                    <Button text="Refresh" styleClass="btn-secondary" onAction="#loadUsers"/>
+                </HBox>
+
+                <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="colUserId"   text="ID"       prefWidth="60"/>
+                        <TableColumn fx:id="colUsername" text="Username" prefWidth="150"/>
+                        <TableColumn fx:id="colEmail"    text="Email"    prefWidth="220"/>
+                        <TableColumn fx:id="colRole"     text="Role"     prefWidth="130"/>
+                        <TableColumn fx:id="colStatus"   text="Status"   prefWidth="100"/>
+                        <TableColumn fx:id="colCreated"  text="Joined"   prefWidth="150"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No users found." style="-fx-text-fill:#4a5568;"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+
+            <!-- ── REQUESTS PANEL ── -->
+            <VBox fx:id="requestsPanel" spacing="16" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="All Blood Requests" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="reqFilterStatus" promptText="Filter Status" styleClass="combo-box" onAction="#loadRequests">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <String fx:value="ALL"/>
+                                <String fx:value="PENDING"/>
+                                <String fx:value="MATCHING"/>
+                                <String fx:value="PARTIALLY_FULFILLED"/>
+                                <String fx:value="FULFILLED"/>
+                                <String fx:value="CANCELLED"/>
+                            </FXCollections>
+                        </items>
+                    </ComboBox>
+                    <Button text="Update Status" styleClass="btn-primary" onAction="#handleUpdateRequestStatus"/>
+                    <Button text="Refresh" styleClass="btn-secondary" onAction="#loadRequests"/>
+                </HBox>
+
+                <TableView fx:id="reqTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="colReqId"       text="#"          prefWidth="60"/>
+                        <TableColumn fx:id="colReqGroup"    text="Blood Type" prefWidth="100"/>
+                        <TableColumn fx:id="colReqQty"      text="Units"      prefWidth="70"/>
+                        <TableColumn fx:id="colReqPriority" text="Priority"   prefWidth="100"/>
+                        <TableColumn fx:id="colReqStatus"   text="Status"     prefWidth="140"/>
+                        <TableColumn fx:id="colReqBy"       text="Requester"  prefWidth="140"/>
+                        <TableColumn fx:id="colReqDate"     text="Date"       prefWidth="130"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- ── INVENTORY PANEL ── -->
+            <VBox fx:id="inventoryPanel" spacing="16" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="Global Blood Inventory" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Refresh" styleClass="btn-secondary" onAction="#loadInventory"/>
+                </HBox>
+
+                <TableView fx:id="invTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="colInvId"       text="#"             prefWidth="60"/>
+                        <TableColumn fx:id="colInvGroup"    text="Blood Type"    prefWidth="100"/>
+                        <TableColumn fx:id="colInvQty"      text="Quantity"      prefWidth="90"/>
+                        <TableColumn fx:id="colInvBank"     text="Blood Bank"    prefWidth="200"/>
+                        <TableColumn fx:id="colInvCollect"  text="Collected"     prefWidth="120"/>
+                        <TableColumn fx:id="colInvExpiry"   text="Expires"       prefWidth="120"/>
+                        <TableColumn fx:id="colInvStatus"   text="Status"        prefWidth="120"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- ── FACILITIES PANEL ── -->
+            <VBox fx:id="facilitiesPanel" spacing="16" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="Hospitals &amp; Blood Banks" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                </HBox>
+                <Label text="Management of facilities will go here. For now, they are managed via database directly." style="-fx-text-fill:#8892b0;"/>
+            </VBox>
+
+        </StackPane>
+    </center>
+</BorderPane>

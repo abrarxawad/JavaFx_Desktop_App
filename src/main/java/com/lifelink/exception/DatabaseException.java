@@ -17,4 +17,12 @@ public class DatabaseException extends LifeLinkException {
     public DatabaseException(String message, Throwable cause) {
         super(message, "A database error occurred. Please try again.", cause);
     }
+
+    public DatabaseException(String message, String userMessage) {
+        super(message, userMessage);
+    }
+
+    public DatabaseException(String message, String userMessage, Throwable cause) {
+        super(message, userMessage, cause);
+    }
 }

@@ -1,11 +1,213 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
-<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.lifelink.controller.DonorDashboardController"
-      styleClass="login-root" alignment="CENTER" spacing="20"
-      style="-fx-padding:40; -fx-background-color:#0f1117;">
-    <Label text="🩸 Donor Dashboard" style="-fx-font-size:24; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
-    <Label text="Full donor dashboard coming in Phase 7." style="-fx-text-fill:#8892b0;"/>
-    <Button text="Logout" styleClass="btn-danger" onAction="#handleLogout"/>
-</VBox>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.lifelink.controller.DonorDashboardController"
+            styleClass="main-border-pane">
+
+    <!-- ── Sidebar ── -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0">
+            <!-- Brand -->
+            <VBox styleClass="sidebar-brand" spacing="2">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="🩸" styleClass="sidebar-brand-icon"/>
+                    <VBox spacing="1">
+                        <Label text="LifeLink" styleClass="sidebar-brand-text"/>
+                        <Label text="Donor Portal" styleClass="sidebar-brand-sub"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- Nav -->
+            <Label text="NAVIGATION" styleClass="sidebar-section-label"/>
+            <Button fx:id="navOverview"    text="📊  Overview"          styleClass="sidebar-nav-btn,sidebar-nav-btn-active" maxWidth="Infinity" onAction="#showOverview"/>
+            <Button fx:id="navProfile"     text="👤  My Profile"        styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showProfile"/>
+            <Button fx:id="navHistory"     text="📋  Donation History"  styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showHistory"/>
+            <Button fx:id="navRequests"    text="🔔  Blood Requests"    styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showRequests"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Logout -->
+            <Label text="ACCOUNT" styleClass="sidebar-section-label"/>
+            <Button text="🚪  Logout" styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#handleLogout"/>
+            <VBox style="-fx-padding: 8;"/>
+        </VBox>
+    </left>
+
+    <!-- ── Top Bar ── -->
+    <top>
+        <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+            <Label fx:id="topbarTitle" text="Overview" styleClass="topbar-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER_RIGHT" spacing="2">
+                <Label fx:id="topbarUserName" text="Donor" styleClass="topbar-user-name"/>
+                <Label text="DONOR" styleClass="topbar-user-role"/>
+            </VBox>
+            <Button text="Logout" styleClass="topbar-logout-btn" onAction="#handleLogout"/>
+        </HBox>
+    </top>
+
+    <!-- ── Content ── -->
+    <center>
+        <StackPane fx:id="contentStack" styleClass="content-area">
+
+            <!-- ── OVERVIEW PANEL ── -->
+            <VBox fx:id="overviewPanel" spacing="20" visible="true">
+                <Label text="Welcome Back, Donor!" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+
+                <!-- Stat cards row -->
+                <HBox spacing="16">
+                    <VBox styleClass="stat-card,stat-card-accent" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="🩸" styleClass="stat-card-icon"/>
+                        <Label fx:id="statTotalDonations" text="0" styleClass="stat-card-value"/>
+                        <Label text="Total Donations" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-teal" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="✅" styleClass="stat-card-icon"/>
+                        <Label fx:id="statEligibility" text="ELIGIBLE" styleClass="stat-card-value" style="-fx-font-size:18;"/>
+                        <Label text="Eligibility Status" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-success" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="📅" styleClass="stat-card-icon"/>
+                        <Label fx:id="statLastDonation" text="Never" styleClass="stat-card-value" style="-fx-font-size:18;"/>
+                        <Label text="Last Donation" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-warning" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="🔔" styleClass="stat-card-icon"/>
+                        <Label fx:id="statOpenRequests" text="0" styleClass="stat-card-value"/>
+                        <Label text="Nearby Requests" styleClass="stat-card-label"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Donor profile summary card -->
+                <VBox styleClass="stat-card" spacing="12">
+                    <Label text="Donor Profile" styleClass="section-header"/>
+                    <HBox spacing="30">
+                        <VBox spacing="6">
+                            <Label text="Name" styleClass="form-label"/>
+                            <Label fx:id="profileName" text="—" style="-fx-text-fill:#f0f4ff; -fx-font-size:14;"/>
+                        </VBox>
+                        <VBox spacing="6">
+                            <Label text="Blood Group" styleClass="form-label"/>
+                            <Label fx:id="profileBloodGroup" text="—" style="-fx-text-fill:#e53e3e; -fx-font-size:18; -fx-font-weight:bold;"/>
+                        </VBox>
+                        <VBox spacing="6">
+                            <Label text="City" styleClass="form-label"/>
+                            <Label fx:id="profileCity" text="—" style="-fx-text-fill:#f0f4ff; -fx-font-size:14;"/>
+                        </VBox>
+                        <VBox spacing="6">
+                            <Label text="Phone" styleClass="form-label"/>
+                            <Label fx:id="profilePhone" text="—" style="-fx-text-fill:#f0f4ff; -fx-font-size:14;"/>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Edit Profile" styleClass="btn-secondary" onAction="#showProfile"/>
+                    </HBox>
+                </VBox>
+
+                <!-- Status message -->
+                <Label fx:id="overviewStatus" text="" wrapText="true" style="-fx-text-fill:#8892b0; -fx-font-size:13;"/>
+            </VBox>
+
+            <!-- ── PROFILE PANEL ── -->
+            <VBox fx:id="profilePanel" spacing="20" visible="false">
+                <Label text="My Profile" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+
+                <VBox styleClass="stat-card" spacing="16">
+                    <Label text="Personal Information" styleClass="section-header"/>
+                    <HBox spacing="16">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="First Name" styleClass="form-label"/>
+                            <TextField fx:id="editFirstName" styleClass="form-field" promptText="First name"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Last Name" styleClass="form-label"/>
+                            <TextField fx:id="editLastName" styleClass="form-field" promptText="Last name"/>
+                        </VBox>
+                    </HBox>
+                    <HBox spacing="16">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Phone" styleClass="form-label"/>
+                            <TextField fx:id="editPhone" styleClass="form-field" promptText="Phone number"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="City" styleClass="form-label"/>
+                            <TextField fx:id="editCity" styleClass="form-field" promptText="City"/>
+                        </VBox>
+                    </HBox>
+                    <VBox spacing="6">
+                        <Label text="Address" styleClass="form-label"/>
+                        <TextField fx:id="editAddress" styleClass="form-field" promptText="Full address"/>
+                    </VBox>
+                    <HBox spacing="16">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Available to Donate" styleClass="form-label"/>
+                            <CheckBox fx:id="editAvailability" text="I am available to donate blood" style="-fx-text-fill:#f0f4ff;"/>
+                        </VBox>
+                    </HBox>
+
+                    <Label fx:id="profileStatus" text="" wrapText="true"/>
+
+                    <HBox spacing="12">
+                        <Button text="Save Changes" styleClass="btn-primary" onAction="#handleSaveProfile"/>
+                        <Button text="Cancel" styleClass="btn-secondary" onAction="#showOverview"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+
+            <!-- ── DONATION HISTORY PANEL ── -->
+            <VBox fx:id="historyPanel" spacing="16" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="Donation History" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Record New Donation" styleClass="btn-primary" onAction="#handleRecordDonation"/>
+                    <Button text="Refresh" styleClass="btn-secondary" onAction="#showHistory"/>
+                </HBox>
+
+                <TableView fx:id="historyTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="colDonDate"   text="Date"        prefWidth="130"/>
+                        <TableColumn fx:id="colDonGroup"  text="Blood Group" prefWidth="120"/>
+                        <TableColumn fx:id="colDonQty"    text="Volume (ml)" prefWidth="120"/>
+                        <TableColumn fx:id="colDonBank"   text="Blood Bank"  prefWidth="200"/>
+                        <TableColumn fx:id="colDonStatus" text="Status"      prefWidth="120"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No donation history yet. Your donations will appear here." style="-fx-text-fill:#4a5568;"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+
+            <!-- ── BLOOD REQUESTS PANEL ── -->
+            <VBox fx:id="requestsPanel" spacing="16" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="Blood Requests Matching Your Type" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Refresh" styleClass="btn-secondary" onAction="#showRequests"/>
+                </HBox>
+
+                <Label text="These are active requests for your blood type. Contact the requester to help." style="-fx-text-fill:#8892b0; -fx-font-size:13;"/>
+
+                <TableView fx:id="requestsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="colReqId"       text="#"          prefWidth="60"/>
+                        <TableColumn fx:id="colReqGroup"    text="Blood Type" prefWidth="110"/>
+                        <TableColumn fx:id="colReqQty"      text="Units"      prefWidth="80"/>
+                        <TableColumn fx:id="colReqPriority" text="Priority"   prefWidth="110"/>
+                        <TableColumn fx:id="colReqStatus"   text="Status"     prefWidth="130"/>
+                        <TableColumn fx:id="colReqBy"       text="Requested By" prefWidth="160"/>
+                        <TableColumn fx:id="colReqDate"     text="Date"       prefWidth="150"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No open requests for your blood type right now." style="-fx-text-fill:#4a5568;"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+
+        </StackPane>
+    </center>
+
+</BorderPane>

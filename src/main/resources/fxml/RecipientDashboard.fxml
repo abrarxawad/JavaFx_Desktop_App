@@ -1,11 +1,182 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
-<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.lifelink.controller.RecipientDashboardController"
-      styleClass="login-root" alignment="CENTER" spacing="20"
-      style="-fx-padding:40; -fx-background-color:#0f1117;">
-    <Label text="💉 Recipient Dashboard" style="-fx-font-size:24; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
-    <Label text="Full recipient dashboard coming in Phase 11." style="-fx-text-fill:#8892b0;"/>
-    <Button text="Logout" styleClass="btn-danger" onAction="#handleLogout"/>
-</VBox>
+<?import javafx.geometry.Insets?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.lifelink.controller.RecipientDashboardController"
+            styleClass="main-border-pane">
+
+    <!-- ── Sidebar ── -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0">
+            <VBox styleClass="sidebar-brand" spacing="2">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="🩸" styleClass="sidebar-brand-icon"/>
+                    <VBox spacing="1">
+                        <Label text="LifeLink" styleClass="sidebar-brand-text"/>
+                        <Label text="Recipient Portal" styleClass="sidebar-brand-sub"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <Label text="NAVIGATION" styleClass="sidebar-section-label"/>
+            <Button fx:id="navOverview"    text="📊  Dashboard"        styleClass="sidebar-nav-btn,sidebar-nav-btn-active" maxWidth="Infinity" onAction="#showOverview"/>
+            <Button fx:id="navNewRequest"  text="➕  New Request"      styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showNewRequest"/>
+            <Button fx:id="navMyRequests"  text="📋  My Requests"      styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showMyRequests"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+            <Label text="ACCOUNT" styleClass="sidebar-section-label"/>
+            <Button text="🚪  Logout" styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#handleLogout"/>
+            <VBox style="-fx-padding: 8;"/>
+        </VBox>
+    </left>
+
+    <!-- ── Topbar ── -->
+    <top>
+        <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+            <Label fx:id="topbarTitle" text="Dashboard" styleClass="topbar-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER_RIGHT" spacing="2">
+                <Label fx:id="topbarUserName" text="Recipient" styleClass="topbar-user-name"/>
+                <Label text="RECIPIENT" styleClass="topbar-user-role"/>
+            </VBox>
+            <Button text="Logout" styleClass="topbar-logout-btn" onAction="#handleLogout"/>
+        </HBox>
+    </top>
+
+    <!-- ── Content ── -->
+    <center>
+        <StackPane fx:id="contentStack" styleClass="content-area">
+
+            <!-- ── OVERVIEW PANEL ── -->
+            <VBox fx:id="overviewPanel" spacing="20" visible="true">
+                <Label text="Recipient Dashboard" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+
+                <!-- Stat cards -->
+                <HBox spacing="16">
+                    <VBox styleClass="stat-card,stat-card-accent" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="📋" styleClass="stat-card-icon"/>
+                        <Label fx:id="statTotal" text="0" styleClass="stat-card-value"/>
+                        <Label text="Total Requests" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-warning" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="⏳" styleClass="stat-card-icon"/>
+                        <Label fx:id="statPending" text="0" styleClass="stat-card-value"/>
+                        <Label text="Pending" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-success" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="✅" styleClass="stat-card-icon"/>
+                        <Label fx:id="statFulfilled" text="0" styleClass="stat-card-value"/>
+                        <Label text="Fulfilled" styleClass="stat-card-label"/>
+                    </VBox>
+                    <VBox styleClass="stat-card,stat-card-teal" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="🚨" styleClass="stat-card-icon"/>
+                        <Label fx:id="statEmergency" text="0" styleClass="stat-card-value"/>
+                        <Label text="Emergency" styleClass="stat-card-label"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Quick action card -->
+                <VBox styleClass="stat-card" spacing="12">
+                    <Label text="Quick Actions" styleClass="section-header"/>
+                    <HBox spacing="12">
+                        <Button text="➕ Submit New Blood Request" styleClass="btn-primary" onAction="#showNewRequest"/>
+                        <Button text="📋 View My Requests" styleClass="btn-secondary" onAction="#showMyRequests"/>
+                    </HBox>
+                </VBox>
+
+                <Label fx:id="overviewStatus" text="" wrapText="true" style="-fx-text-fill:#8892b0;"/>
+            </VBox>
+
+            <!-- ── NEW REQUEST PANEL ── -->
+            <VBox fx:id="newRequestPanel" spacing="20" visible="false">
+                <Label text="Submit a Blood Request" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+
+                <VBox styleClass="stat-card" spacing="16" maxWidth="600">
+                    <Label text="Request Details" styleClass="section-header"/>
+
+                    <HBox spacing="16">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Blood Group Needed *" styleClass="form-label"/>
+                            <ComboBox fx:id="reqBloodGroup" promptText="Select blood group" maxWidth="Infinity" styleClass="combo-box">
+                                <items>
+                                    <FXCollections fx:factory="observableArrayList">
+                                        <String fx:value="A_POSITIVE"/>
+                                        <String fx:value="A_NEGATIVE"/>
+                                        <String fx:value="B_POSITIVE"/>
+                                        <String fx:value="B_NEGATIVE"/>
+                                        <String fx:value="AB_POSITIVE"/>
+                                        <String fx:value="AB_NEGATIVE"/>
+                                        <String fx:value="O_POSITIVE"/>
+                                        <String fx:value="O_NEGATIVE"/>
+                                    </FXCollections>
+                                </items>
+                            </ComboBox>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Quantity (units) *" styleClass="form-label"/>
+                            <TextField fx:id="reqQuantity" styleClass="form-field" promptText="e.g. 2" text="1"/>
+                        </VBox>
+                    </HBox>
+
+                    <VBox spacing="6">
+                        <Label text="Priority Level *" styleClass="form-label"/>
+                        <ComboBox fx:id="reqPriority" promptText="Select priority" maxWidth="Infinity" styleClass="combo-box">
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="NORMAL"/>
+                                    <String fx:value="URGENT"/>
+                                    <String fx:value="EMERGENCY"/>
+                                </FXCollections>
+                            </items>
+                        </ComboBox>
+                    </VBox>
+
+                    <VBox spacing="6">
+                        <Label text="Additional Notes" styleClass="form-label"/>
+                        <TextArea fx:id="reqNotes" styleClass="form-field" promptText="Hospital name, ward, special requirements..."
+                                  prefHeight="80" wrapText="true"/>
+                    </VBox>
+
+                    <Label fx:id="requestFormStatus" text="" wrapText="true"/>
+
+                    <HBox spacing="12">
+                        <Button text="🚨 Submit Request" styleClass="btn-primary" onAction="#handleSubmitRequest"/>
+                        <Button text="Cancel" styleClass="btn-secondary" onAction="#showOverview"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+
+            <!-- ── MY REQUESTS PANEL ── -->
+            <VBox fx:id="myRequestsPanel" spacing="16" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="My Blood Requests" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="➕ New Request" styleClass="btn-primary" onAction="#showNewRequest"/>
+                    <Button text="Refresh" styleClass="btn-secondary" onAction="#showMyRequests"/>
+                </HBox>
+
+                <TableView fx:id="requestsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="colId"       text="#"          prefWidth="60"/>
+                        <TableColumn fx:id="colGroup"    text="Blood Type" prefWidth="110"/>
+                        <TableColumn fx:id="colQty"      text="Units"      prefWidth="80"/>
+                        <TableColumn fx:id="colPriority" text="Priority"   prefWidth="110"/>
+                        <TableColumn fx:id="colStatus"   text="Status"     prefWidth="160"/>
+                        <TableColumn fx:id="colNotes"    text="Notes"      prefWidth="200"/>
+                        <TableColumn fx:id="colDate"     text="Submitted"  prefWidth="140"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No requests yet. Use 'New Request' to submit one." style="-fx-text-fill:#4a5568;"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+
+        </StackPane>
+    </center>
+
+</BorderPane>

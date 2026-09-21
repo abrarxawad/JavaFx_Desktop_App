@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -65,6 +67,12 @@ public class UserDAO {
     private static final String SQL_EXISTS_EMAIL =
         "SELECT 1 FROM users WHERE email = ?";
 
+    private static final String SQL_GET_ALL =
+        "SELECT user_id, username, email, password_hash, role, status, created_at, updated_at FROM users";
+
+    private static final String SQL_DELETE =
+        "DELETE FROM users WHERE user_id = ?";
+
     // ── Create ────────────────────────────────────────────────────────────────
 
     /**
@@ -101,7 +109,8 @@ public class UserDAO {
             }
         } catch (SQLException e) {
             logger.error("Failed to create user '{}': {}", username, e.getMessage());
-            if (e.getErrorCode() == 1062) { // MySQL duplicate entry
+            // SQLite unique constraint failed check
+            if (e.getMessage() != null && e.getMessage().contains("UNIQUE constraint failed")) {
                 throw new DatabaseException(
                     "Duplicate username or email: " + username,
                     "An account with this username or email already exists.", e
@@ -159,6 +168,35 @@ public class UserDAO {
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
+
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        try (var ctx = dbManager.getConnectionWrapper()) {
+            Connection conn = ctx.getConnection();
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(SQL_GET_ALL)) {
+                while (rs.next()) {
+                    users.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to fetch all users: " + e.getMessage(), e);
+        }
+        return users;
+    }
+
+    public void deleteUser(int userId) {
+        try (var ctx = dbManager.getConnectionWrapper()) {
+            Connection conn = ctx.getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(SQL_DELETE)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+                logger.info("Deleted user {}", userId);
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to delete user: " + e.getMessage(), e);
+        }
+    }
 
     public void updateStatus(int userId, String status) {
         try (var ctx = dbManager.getConnectionWrapper()) {
@@ -231,6 +269,18 @@ public class UserDAO {
             }
         } catch (SQLException e) {
             throw new DatabaseException("Error counting users: " + e.getMessage(), e);
+        }
+    }
+
+    public int countAll() {
+        try (var ctx = dbManager.getConnectionWrapper()) {
+            Connection conn = ctx.getConnection();
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users")) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error counting all users: " + e.getMessage(), e);
         }
     }
 

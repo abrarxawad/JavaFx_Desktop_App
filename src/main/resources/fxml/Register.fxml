@@ -2,21 +2,53 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
 
-<!--
-  Register.fxml — Placeholder for Phase 5 (Authentication)
-  Full implementation will be added in Phase 5.
--->
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.lifelink.controller.RegisterController"
       styleClass="login-root"
       alignment="CENTER"
-      spacing="20">
+      spacing="15">
     <padding><Insets top="40" right="40" bottom="40" left="40"/></padding>
 
     <Label text="🩸 LifeLink — Create Account" style="-fx-font-size:24; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
-    <Label text="Full registration form coming in Phase 5." style="-fx-text-fill:#8892b0;"/>
-    <Button fx:id="backToLoginBtn" text="← Back to Login"
-            styleClass="btn-secondary" onAction="#handleBack"/>
+    <Label text="Register to manage blood donations or requests." style="-fx-text-fill:#8892b0;"/>
+    
+    <VBox spacing="5" maxWidth="300">
+        <Label text="Username" style="-fx-text-fill:#a8b2d1;"/>
+        <TextField fx:id="usernameField" promptText="Enter a unique username" styleClass="text-field"/>
+    </VBox>
+
+    <VBox spacing="5" maxWidth="300">
+        <Label text="Email" style="-fx-text-fill:#a8b2d1;"/>
+        <TextField fx:id="emailField" promptText="Enter your email" styleClass="text-field"/>
+    </VBox>
+
+    <VBox spacing="5" maxWidth="300">
+        <Label text="Password" style="-fx-text-fill:#a8b2d1;"/>
+        <PasswordField fx:id="passwordField" promptText="Enter a strong password" styleClass="text-field"/>
+    </VBox>
+
+    <VBox spacing="5" maxWidth="300">
+        <Label text="Account Type" style="-fx-text-fill:#a8b2d1;"/>
+        <ComboBox fx:id="roleComboBox" promptText="Select your role" maxWidth="Infinity" styleClass="combo-box">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="DONOR"/>
+                    <String fx:value="RECIPIENT"/>
+                    <String fx:value="HOSPITAL"/>
+                    <String fx:value="BLOOD_BANK"/>
+                </FXCollections>
+            </items>
+        </ComboBox>
+    </VBox>
+
+    <Label fx:id="statusMessage" text="" style="-fx-text-fill:#e06c75; -fx-font-size:13;"/>
+
+    <HBox spacing="20" alignment="CENTER" maxWidth="300">
+        <Button fx:id="backToLoginBtn" text="Cancel" styleClass="btn-secondary" onAction="#handleBack" prefWidth="140"/>
+        <Button fx:id="registerBtn" text="Create Account" styleClass="btn-primary" onAction="#handleRegister" prefWidth="140"/>
+    </HBox>
 </VBox>

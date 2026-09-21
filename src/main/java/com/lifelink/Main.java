@@ -42,6 +42,9 @@ public class Main extends Application {
         try {
             logger.info("Starting LifeLink application...");
 
+            // ── Initialize SQLite Database Tables ────────────────────────────
+            com.lifelink.database.DatabaseInitializer.initialize();
+
             // ── Load Login FXML ──────────────────────────────────────────────
             // FXMLLoader reads the FXML file and instantiates the controller.
             FXMLLoader loader = new FXMLLoader(
