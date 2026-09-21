@@ -18,12 +18,12 @@ import java.util.concurrent.BlockingQueue;
  *
  * <p><b>Design Pattern — Singleton:</b> Only one instance of this class can exist,
  * ensuring a single, centralised connection pool. This prevents multiple parts of
- * the application from each opening their own unlimited connections to MySQL.
+ * the application from each opening their own unlimited connections to SQLite.
  *
  * <p><b>Design Pattern — Connection Pool (simplified):</b> Instead of creating and
  * destroying a {@link Connection} for every query, we maintain a small pool of
  * reusable connections using a {@link BlockingQueue}. This dramatically reduces
- * latency for rapid consecutive queries and avoids exhausting MySQL's connection limit.
+ * latency for rapid consecutive queries while keeping the SQLite database responsive.
  *
  * <p><b>Thread Safety:</b> {@link BlockingQueue} is thread-safe by design, so
  * multiple concurrent background threads (e.g., the matching engine and inventory
@@ -92,8 +92,8 @@ public class DatabaseManager {
         if (connectionPool.isEmpty()) {
             throw new DatabaseException(
                 "Could not establish any database connections. "
-                + "Is MySQL running? Check config/database.properties.",
-                "Cannot connect to the database. Please ensure MySQL is running."
+                + "Check the SQLite database path and file permissions in config/database.properties.",
+                "Cannot connect to the SQLite database. Please confirm the database file exists and is accessible."
             );
         }
     }

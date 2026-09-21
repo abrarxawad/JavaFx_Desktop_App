@@ -1,17 +1,13 @@
 -- =============================================================
 -- LifeLink Blood Bank & Donor Navigation System
--- Database Schema — MySQL 8.x
+-- SQLite Schema Notes
 -- =============================================================
--- Run this file ONCE to initialise the database.
--- Command: mysql -u root < schema.sql
+-- This project initializes the SQLite database automatically on startup.
+-- This file is a legacy reference only; the runtime database is created by
+-- DatabaseInitializer and stored in lifelink.db at the project root.
 -- =============================================================
 
--- Create and select the database
-CREATE DATABASE IF NOT EXISTS lifelink
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE lifelink;
+PRAGMA foreign_keys = ON;
 
 -- =============================================================
 -- TABLE: users
