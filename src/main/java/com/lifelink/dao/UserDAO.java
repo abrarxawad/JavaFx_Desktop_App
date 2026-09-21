@@ -23,7 +23,7 @@ import java.util.Optional;
  *
  * <p><b>Architecture Layer:</b>
  * <pre>
- *   Controller → Service → UserDAO → DatabaseManager → MySQL
+ *   Controller → Service → UserDAO → DatabaseManager → SQLite
  * </pre>
  *
  * <p><b>Package:</b> com.lifelink.dao

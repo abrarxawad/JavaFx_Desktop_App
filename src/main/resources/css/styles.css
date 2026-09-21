@@ -7,17 +7,17 @@
 /* ── Root / Global Variables ─────────────────────────────────── */
 .root {
     /* Colour Palette */
-    -ll-bg-primary:     #0f1117;
-    -ll-bg-secondary:   #1a1d27;
-    -ll-bg-card:        #1e2235;
-    -ll-bg-card-hover:  #252a40;
-    -ll-bg-input:       #262a3e;
-    -ll-bg-sidebar:     #13151f;
+    -ll-bg-primary:     #0b1020;
+    -ll-bg-secondary:   #121a2b;
+    -ll-bg-card:        #162235;
+    -ll-bg-card-hover:  #1d2d45;
+    -ll-bg-input:       #1d2a3d;
+    -ll-bg-sidebar:     #0d1420;
 
-    -ll-accent:         #e53e3e;       /* crimson red — blood / medical */
-    -ll-accent-dark:    #c53030;
-    -ll-accent-light:   #fc8181;
-    -ll-accent-glow:    rgba(229,62,62,0.25);
+    -ll-accent:         #e63946;       /* stronger clinical red */
+    -ll-accent-dark:    #b91727;
+    -ll-accent-light:   #ff8a9c;
+    -ll-accent-glow:    rgba(230,57,70,0.25);
 
     -ll-teal:           #38b2ac;       /* secondary accent — calm / clinical */
     -ll-teal-dark:      #2c7a7b;
@@ -64,22 +64,22 @@
 .login-bg {
     -fx-background-color: linear-gradient(
         to bottom right,
-        #0f1117 0%,
-        #1a0a0a 50%,
-        #0f1117 100%
+        #09111b 0%,
+        #120d1d 35%,
+        #0b1020 100%
     );
     -fx-padding: 40;
 }
 
 /* The glassmorphism card */
 .login-card {
-    -fx-background-color: rgba(30, 34, 53, 0.92);
-    -fx-background-radius: 20;
-    -fx-border-color: rgba(229, 62, 62, 0.3);
-    -fx-border-width: 1;
-    -fx-border-radius: 20;
-    -fx-effect: dropshadow(gaussian, rgba(229,62,62,0.15), 40, 0, 0, 0),
-                dropshadow(gaussian, rgba(0,0,0,0.6), 30, 0, 0, 10);
+    -fx-background-color: rgba(20, 30, 46, 0.92);
+    -fx-background-radius: 22;
+    -fx-border-color: rgba(230, 57, 70, 0.35);
+    -fx-border-width: 1.2;
+    -fx-border-radius: 22;
+    -fx-effect: dropshadow(gaussian, rgba(230,57,70,0.18), 42, 0, 0, 0),
+                dropshadow(gaussian, rgba(0,0,0,0.7), 28, 0, 0, 12);
     -fx-padding: 0;
 }
 
@@ -145,20 +145,20 @@
 }
 
 .login-btn-primary {
-    -fx-background-color: linear-gradient(to right, #e53e3e, #c53030);
-    -fx-background-radius: 8;
+    -fx-background-color: linear-gradient(to right, #e63946, #b91727);
+    -fx-background-radius: 10;
     -fx-text-fill: white;
     -fx-font-size: 15px;
     -fx-font-weight: bold;
     -fx-padding: 13 0;
     -fx-cursor: hand;
     -fx-pref-height: 48;
-    -fx-effect: dropshadow(gaussian, rgba(229,62,62,0.35), 10, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(230,57,70,0.38), 12, 0, 0, 3);
 }
 
 .login-btn-primary:hover {
-    -fx-background-color: linear-gradient(to right, #fc5c5c, #e53e3e);
-    -fx-effect: dropshadow(gaussian, rgba(229,62,62,0.55), 16, 0, 0, 4);
+    -fx-background-color: linear-gradient(to right, #ff6b7e, #e63946);
+    -fx-effect: dropshadow(gaussian, rgba(230,57,70,0.55), 18, 0, 0, 5);
     -fx-scale-x: 1.01;
     -fx-scale-y: 1.01;
 }

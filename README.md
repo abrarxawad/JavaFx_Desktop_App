@@ -1,84 +1,118 @@
 # LifeLink — Blood Bank & Donor Navigation System
 
-> **Advanced Programming Laboratory Project**
-> Developed with Java 26, JavaFX 21, and MySQL 8.x
+> Java 25 + JavaFX 25 + SQLite
 
-LifeLink is a centralized blood donation and emergency blood-management platform connecting donors, recipients, hospitals, and blood banks. 
+LifeLink is a healthcare-focused desktop application for managing blood donation operations, donor matching, inventory tracking, and emergency blood request workflows.
 
-This repository contains the completed project skeleton (Phases 1-3) along with the first UI screens (Login), ready to be loaded into IntelliJ IDEA.
-
----
-
- Quick Start Guide
-
-### 1. Database Setup
-You must initialize the database before running the application, as the login screen authenticates against MySQL.
-
-1. Open MySQL Workbench (or your preferred MySQL client, e.g., phpMyAdmin, command line).
-2. Connect using the username `root` (no password, as configured).
-3. Open the file `database/schema.sql` located in this project folder.
-4. Execute the entire script. It will create the `lifelink` database, all 12 tables, and insert a default admin user.
-
-### 2. Opening in IntelliJ IDEA
-This project is built using Maven. Since IntelliJ has built-in Maven support, you don't need Maven installed on your system.
-
-1. Open IntelliJ IDEA.
-2. Select **File > Open...** and select the `JavaFx Assinment` folder (the folder containing the `pom.xml`).
-3. Click **"Trust Project"** if prompted.
-4. IntelliJ will automatically detect the Maven `pom.xml` and start downloading dependencies (JavaFX, MySQL Connector, BCrypt, SLF4J, JUnit). 
-   - *Wait for the progress bar at the bottom right to finish.*
-5. Ensure your Project SDK is set to Java 21 or higher (**File > Project Structure > Project > SDK**).
-
-### 3. Running the Application
-1. In the Project tool window on the left, navigate to:
-   `src/main/java/com/lifelink/Main.java`
-2. Right-click on `Main` and select **Run 'Main.main()'**.
-3. The JavaFX Login window should appear.
+This project uses SQLite as its database backend, which means the app creates and manages the `lifelink.db` database automatically when it starts. There is no MySQL installation required for normal use.
 
 ---
 
-##  Default Admin Account
-A default admin account is created by the `schema.sql` script:
+## Features
 
-* **Username:** `admin`
-* **Password:** `Admin@1234`
-
-You can use these credentials to log in on the start screen. (The application will route you to the placeholder Admin Dashboard).
+- Secure login with role-based access
+- Donor registration and profile management
+- Recipient and hospital request workflows
+- Blood bank stock tracking
+- Matching and recommendation flows
+- Admin and dashboard views for each user role
+- Professional JavaFX UI with a healthcare-oriented dark theme
 
 ---
 
-## 🏗 Project Architecture
+## Quick Start
 
-This project follows a strict MVC and layered architecture to enforce clean separation of concerns and prevent SQL injection.
+### 1. Install the runtime
 
-```text
-UI (JavaFX / FXML)
-       ↓
-Controller (e.g. LoginController)
-       ↓
-Service Layer (Validation & Business Logic)
-       ↓
-DAO (e.g. UserDAO) — All SQL goes here
-       ↓
-DatabaseManager (Singleton Connection Pool)
-       ↓
-MySQL Database
+Make sure Java 25 is installed and available on your system.
+
+### 2. Build the project
+
+From the project root:
+
+```bash
+mvn clean compile
 ```
 
-### Key Technologies Utilized
-* **Java Concurrency:** Heavy operations (hashing, JDBC queries) are offloaded to background threads using `javafx.concurrent.Task` to keep the UI responsive.
-* **Design Patterns:** Singleton (DatabaseManager, SessionManager), DAO, MVC, Builder (BloodRequest), Factory.
-* **Security:** BCrypt for password hashing. `PreparedStatement` for all database interactions.
-* **UI/UX:** Modern dark healthcare theme with glassmorphism effects (CSS), entirely free of inline styles.
+To launch the application:
+
+```bash
+mvn javafx:run
+```
+
+### 3. Database setup
+
+The project uses SQLite, so the app will create the database automatically on first launch.
+
+- Database file: `lifelink.db`
+- Configuration file: `src/main/resources/config/database.properties`
+
+You do not need MySQL or any external database server.
 
 ---
 
-## Next Steps
-We have completed Phases 1 through 3, plus the Phase 4 and 5 foundations:
-- [x] Phase 1: SRS & Architecture Plan
-- [x] Phase 2: Database Schema & ER Design 
-- [x] Phase 3: Maven Project Skeleton
-- [x] Phase 4: JavaFX App Shell + Global CSS
-- [x] Phase 5: Authentication (Login Screen + Controller)
+## Default Admin Access
 
-When you are ready, I can continue with **Phase 6: User & Role Management** (building the registration form and the admin user dashboard).
+Use the default administrator account to access the full admin workflow:
+
+- Username: `admin`
+- Password: `Admin@1234`
+
+After logging in, the app routes the user to the appropriate dashboard based on the account role.
+
+---
+
+## How to Access All Features
+
+### Admin access
+
+1. Start the app.
+2. Log in with the default admin account above.
+3. The administrator dashboard gives access to user oversight and operational controls.
+
+### Donor access
+
+1. Open the app and select the registration option.
+2. Create a donor profile.
+3. Log in with the new donor account.
+4. Use the donor dashboard to view availability, update information, and manage donation status.
+
+### Recipient / Hospital / Blood Bank access
+
+1. Register a matching account for that role.
+2. Sign in to the corresponding dashboard.
+3. Use the workflow screens for requests, matching, and blood inventory operations.
+
+The role-based navigation is handled automatically by `LoginController`, which directs each user to the correct FXML dashboard.
+
+---
+
+## Project Architecture
+
+```text
+JavaFX UI (FXML + CSS)
+       ↓
+Controller layer
+       ↓
+DAO layer
+       ↓
+SQLite database (lifelink.db)
+```
+
+### Key technologies
+
+- Java 25
+- JavaFX 25
+- SQLite JDBC
+- Maven
+- BCrypt password hashing
+- SLF4J + Logback
+- JUnit 5
+
+---
+
+## Notes
+
+- The app is designed to initialize the SQLite database automatically at startup.
+- The previous MySQL instructions were outdated and have been corrected to reflect the actual database configuration.
+- If the database file is missing, restart the app and the initializer will recreate it.

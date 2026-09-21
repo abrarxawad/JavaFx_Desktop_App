@@ -25,7 +25,7 @@
         <appender-ref ref="FILE"/>
     </root>
 
-    <!-- Reduce noise from MySQL connector -->
-    <logger name="com.mysql" level="WARN"/>
+    <!-- Reduce noise from SQLite driver and framework internals -->
+    <logger name="org.sqlite" level="WARN"/>
 
 </configuration>
