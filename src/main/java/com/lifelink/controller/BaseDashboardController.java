@@ -1,6 +1,7 @@
 package com.lifelink.controller;
 
 import com.lifelink.security.SessionManager;
+import com.lifelink.util.ThemeManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,13 +15,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Objects;
 
-/**
- * Abstract base controller providing common actions shared by all dashboard controllers.
- *
- * <p><b>OOP — Inheritance:</b> All five dashboard controllers extend this class
- * to avoid duplicating the logout logic in each one.
- *
- * <p><b>Package:</b> com.lifelink.controller
+/*
+ Abstract base controller providing common actions shared by all dashboard controllers.
  */
 public abstract class BaseDashboardController {
 
@@ -43,9 +39,7 @@ public abstract class BaseDashboardController {
             Parent root = loader.load();
             Stage stage = (Stage) source.getScene().getWindow();
             Scene scene = new Scene(root, stage.getWidth(), stage.getHeight());
-            scene.getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
-            );
+            ThemeManager.applyTheme(scene);
             stage.setScene(scene);
         } catch (IOException e) {
             logger.error("Failed to navigate to Login screen after logout: {}", e.getMessage());

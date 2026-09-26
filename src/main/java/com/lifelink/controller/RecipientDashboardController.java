@@ -31,7 +31,7 @@ import java.util.ResourceBundle;
  */
 public class RecipientDashboardController extends BaseDashboardController implements Initializable {
 
-    // ── FXML nodes ────────────────────────────────────────────────────────────
+    //  FXML nodes 
     @FXML private Label topbarUserName;
     @FXML private Label topbarTitle;
 
@@ -50,6 +50,8 @@ public class RecipientDashboardController extends BaseDashboardController implem
     // New request form
     @FXML private ComboBox<String> reqBloodGroup;
     @FXML private TextField reqQuantity;
+    @FXML private TextField reqLocation;
+    @FXML private TextField reqHospital;
     @FXML private ComboBox<String> reqPriority;
     @FXML private TextArea  reqNotes;
     @FXML private Label     requestFormStatus;
@@ -64,10 +66,10 @@ public class RecipientDashboardController extends BaseDashboardController implem
     @FXML private TableColumn<BloodRequest, String>  colNotes;
     @FXML private TableColumn<BloodRequest, String>  colDate;
 
-    // ── Dependencies ──────────────────────────────────────────────────────────
+    // ── Dependencies 
     private final BloodRequestDAO requestDAO = new BloodRequestDAO();
 
-    // ── Initialise ────────────────────────────────────────────────────────────
+    // ── Initialise 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         User user = sessionManager.getCurrentUser();
@@ -76,11 +78,21 @@ public class RecipientDashboardController extends BaseDashboardController implem
         reqPriority.getSelectionModel().select("NORMAL");
         reqBloodGroup.getSelectionModel().select(0);
 
+        requestsTable.setRowFactory(tv -> {
+            TableRow<BloodRequest> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getClickCount() == 2) {
+                    openRequestDecisionDialog(row.getItem());
+                }
+            });
+            return row;
+        });
+
         setupTable();
         loadStats();
     }
 
-    // ── Panel switching ───────────────────────────────────────────────────────
+    //  Panel switching 
     @FXML private void showOverview(ActionEvent e)    { switchPanel("overview"); loadStats(); }
     @FXML private void showNewRequest(ActionEvent e)  { switchPanel("new"); resetForm(); }
     @FXML private void showMyRequests(ActionEvent e)  { switchPanel("requests"); loadRequests(); }
@@ -96,7 +108,7 @@ public class RecipientDashboardController extends BaseDashboardController implem
         }
     }
 
-    // ── Data loading ──────────────────────────────────────────────────────────
+    //  Data loading 
 
     private void loadStats() {
         User user = sessionManager.getCurrentUser();
@@ -110,7 +122,7 @@ public class RecipientDashboardController extends BaseDashboardController implem
         task.setOnSucceeded(e -> {
             List<BloodRequest> list = task.getValue();
             statTotal.setText(String.valueOf(list.size()));
-            long pending    = list.stream().filter(r -> "PENDING".equals(r.getStatus()) || "MATCHING".equals(r.getStatus())).count();
+            long pending    = list.stream().filter(r -> "PENDING".equals(r.getStatus()) || "MATCHING".equals(r.getStatus()) || "AWAITING_CONFIRMATION".equals(r.getStatus())).count();
             long fulfilled  = list.stream().filter(r -> "FULFILLED".equals(r.getStatus())).count();
             long emergency  = list.stream().filter(r -> "EMERGENCY".equals(r.getPriority())).count();
             statPending.setText(String.valueOf(pending));
@@ -137,7 +149,7 @@ public class RecipientDashboardController extends BaseDashboardController implem
         Thread t = new Thread(task, "load-req"); t.setDaemon(true); t.start();
     }
 
-    // ── Submit request ────────────────────────────────────────────────────────
+    // ── Submit request 
 
     @FXML
     private void handleSubmitRequest(ActionEvent event) {
@@ -178,9 +190,16 @@ public class RecipientDashboardController extends BaseDashboardController implem
             return;
         }
 
+        String location = reqLocation.getText() == null ? "" : reqLocation.getText().trim();
+        String hospital = reqHospital.getText() == null ? "" : reqHospital.getText().trim();
+
         BloodRequest request = new BloodRequest.Builder()
                 .requesterId(user.getUserId())
                 .requesterName(user.getUsername())
+                .requesterType("RECIPIENT")
+                .requesterLocation(location)
+                .requesterCity(location)
+                .hospitalName(hospital)
                 .bloodGroup(bg)
                 .quantity(qty)
                 .priority(priority)
@@ -206,7 +225,7 @@ public class RecipientDashboardController extends BaseDashboardController implem
         Thread t = new Thread(task, "submit-req"); t.setDaemon(true); t.start();
     }
 
-    // ── Table setup ───────────────────────────────────────────────────────────
+    //  Table setup 
 
     private void setupTable() {
         colId.setCellValueFactory(c -> new SimpleIntegerProperty(c.getValue().getRequestId()).asObject());
@@ -221,7 +240,7 @@ public class RecipientDashboardController extends BaseDashboardController implem
                 c.getValue().getRequestDate() != null ? c.getValue().getRequestDate().toLocalDate().toString() : "—"));
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    //  Helpers 
 
     private void showFormError(String msg) {
         requestFormStatus.setStyle("-fx-text-fill: #fc8181;");
@@ -231,8 +250,48 @@ public class RecipientDashboardController extends BaseDashboardController implem
     private void resetForm() {
         reqBloodGroup.getSelectionModel().select(0);
         reqQuantity.setText("1");
+        reqLocation.clear();
+        reqHospital.clear();
         reqPriority.getSelectionModel().select("NORMAL");
         reqNotes.clear();
         requestFormStatus.setText("");
+    }
+
+    private void openRequestDecisionDialog(BloodRequest request) {
+        if (request == null) return;
+
+        String details = "Request ID: " + request.getRequestId() + "\n"
+                + "Blood Group: " + (request.getBloodGroup() != null ? request.getBloodGroup().getLabel() : "—") + "\n"
+                + "Quantity: " + request.getQuantity() + " units\n"
+                + "Location: " + (request.getRequesterLocation() != null && !request.getRequesterLocation().isBlank() ? request.getRequesterLocation() : "Not provided") + "\n"
+                + "Hospital: " + (request.getHospitalName() != null && !request.getHospitalName().isBlank() ? request.getHospitalName() : "Not provided") + "\n"
+                + "Status: " + request.getStatus() + "\n"
+                + "Notes: " + (request.getNotes() != null ? request.getNotes() : "—");
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Request Details");
+        alert.setHeaderText("Blood request from " + (request.getRequesterName() != null ? request.getRequesterName() : "requester"));
+        alert.setContentText(details);
+
+        if (BloodRequest.STATUS_AWAITING_CONFIRMATION.equalsIgnoreCase(request.getStatus())) {
+            ButtonType accept = new ButtonType("Accept Completed Donation");
+            ButtonType dismiss = new ButtonType("Dismiss");
+            alert.getButtonTypes().setAll(accept, dismiss, ButtonType.CLOSE);
+            alert.showAndWait().ifPresent(type -> {
+                if (type == accept) {
+                    requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_FULFILLED);
+                    loadRequests();
+                    loadStats();
+                } else if (type == dismiss) {
+                    requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_CANCELLED);
+                    loadRequests();
+                    loadStats();
+                }
+            });
+        } else {
+            ButtonType ok = new ButtonType("Close");
+            alert.getButtonTypes().setAll(ok);
+            alert.show();
+        }
     }
 }

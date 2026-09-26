@@ -8,7 +8,7 @@
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.lifelink.controller.AdminDashboardController"
-            styleClass="main-border-pane">
+            styleClass="main-border-pane,dashboard-admin-bg">
 
     <!-- ── Sidebar ── -->
     <left>
@@ -59,6 +59,9 @@
                 <HBox alignment="CENTER_LEFT" spacing="12">
                     <Label text="System Dashboard" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
                     <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Export Donors JSON" styleClass="btn-secondary" onAction="#handleExportJson"/>
+                    <Button text="Import Donors JSON" styleClass="btn-primary" onAction="#handleImportJson"/>
+                    <Button text="Export Requests JSON" styleClass="btn-secondary" onAction="#handleExportRequestsJson"/>
                     <Button text="🔄 Refresh All" styleClass="btn-secondary" onAction="#loadOverviewStats"/>
                 </HBox>
 

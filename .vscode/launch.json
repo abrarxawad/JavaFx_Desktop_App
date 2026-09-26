@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "LifeLink - Main",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "com.lifelink.Main",
+      "projectName": "lifelink",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

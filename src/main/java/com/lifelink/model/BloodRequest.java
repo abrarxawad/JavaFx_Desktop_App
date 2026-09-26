@@ -25,8 +25,10 @@ public class BloodRequest {
     public static final String STATUS_PENDING              = "PENDING";
     public static final String STATUS_MATCHING             = "MATCHING";
     public static final String STATUS_PARTIALLY_FULFILLED  = "PARTIALLY_FULFILLED";
+    public static final String STATUS_AWAITING_CONFIRMATION = "AWAITING_CONFIRMATION";
     public static final String STATUS_FULFILLED            = "FULFILLED";
     public static final String STATUS_CANCELLED            = "CANCELLED";
+    public static final String STATUS_REJECTED             = "REJECTED";
 
     // ── Fields ────────────────────────────────────────────────────────────────
     private int            requestId;
@@ -36,6 +38,9 @@ public class BloodRequest {
     private int            quantity;
     private Integer        hospitalId;       // nullable
     private String         hospitalName;     // denormalised for display
+    private String         requesterLocation;
+    private String         requesterCity;
+    private String         requesterType;
     private String         priority;
     private String         status;
     private LocalDateTime  requestDate;
@@ -69,6 +74,9 @@ public class BloodRequest {
         public Builder quantity(int qty)            { request.quantity = qty;      return this; }
         public Builder hospitalId(Integer hid)      { request.hospitalId = hid;    return this; }
         public Builder hospitalName(String hn)      { request.hospitalName = hn;   return this; }
+        public Builder requesterLocation(String loc){ request.requesterLocation = loc; return this; }
+        public Builder requesterCity(String city)   { request.requesterCity = city; return this; }
+        public Builder requesterType(String type)   { request.requesterType = type; return this; }
         public Builder priority(String p)           { request.priority = p;        return this; }
         public Builder status(String s)             { request.status = s;          return this; }
         public Builder requestDate(LocalDateTime dt){ request.requestDate = dt;    return this; }
@@ -123,6 +131,15 @@ public class BloodRequest {
 
     public String getHospitalName()                { return hospitalName; }
     public void setHospitalName(String hn)         { this.hospitalName = hn; }
+
+    public String getRequesterLocation()           { return requesterLocation; }
+    public void setRequesterLocation(String loc)   { this.requesterLocation = loc; }
+
+    public String getRequesterCity()              { return requesterCity; }
+    public void setRequesterCity(String city)     { this.requesterCity = city; }
+
+    public String getRequesterType()               { return requesterType; }
+    public void setRequesterType(String type)      { this.requesterType = type; }
 
     public String getPriority()                    { return priority; }
     public void setPriority(String p)              { this.priority = p; }

@@ -1,6 +1,8 @@
 package com.lifelink;
 
 import com.lifelink.database.DatabaseManager;
+import com.lifelink.json.JsonDataService;
+import com.lifelink.util.ThemeManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -45,6 +47,9 @@ public class Main extends Application {
             // ── Initialize SQLite Database Tables ────────────────────────────
             com.lifelink.database.DatabaseInitializer.initialize();
 
+            // ── Demonstrate JSON import/export and API simulation ─────────────
+            JsonDataService.runJsonDemo();
+
             // ── Load Login FXML ──────────────────────────────────────────────
             // FXMLLoader reads the FXML file and instantiates the controller.
             FXMLLoader loader = new FXMLLoader(
@@ -54,11 +59,7 @@ public class Main extends Application {
 
             // ── Create Scene with CSS ────────────────────────────────────────
             Scene scene = new Scene(root, MIN_WIDTH, MIN_HEIGHT);
-            scene.getStylesheets().add(
-                    Objects.requireNonNull(
-                        getClass().getResource("/css/styles.css")
-                    ).toExternalForm()
-            );
+            ThemeManager.applyTheme(scene);
 
             // ── Configure Stage ──────────────────────────────────────────────
             primaryStage.setTitle(APP_TITLE);
