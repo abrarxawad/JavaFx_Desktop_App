@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Data Access Object for the {@code blood_requests} table.
@@ -28,8 +27,8 @@ public class BloodRequestDAO {
 
     private static final String SQL_INSERT = """
         INSERT INTO blood_requests
-            (requester_id, blood_group, quantity, hospital_id, priority, status, notes)
-        VALUES (?,?,?,?,?,?,?)
+            (requester_id, blood_group, quantity, hospital_id, hospital_name, requester_type, requester_location, requester_city, priority, status, notes)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)
         """;
 
     private static final String SQL_FIND_ALL = """
@@ -51,7 +50,7 @@ public class BloodRequestDAO {
         SELECT br.*, u.username as requester_name
         FROM blood_requests br
         JOIN users u ON br.requester_id = u.user_id
-        WHERE br.status IN ('PENDING','MATCHING','PARTIALLY_FULFILLED')
+        WHERE br.status IN ('PENDING','MATCHING','PARTIALLY_FULFILLED','AWAITING_CONFIRMATION')
         ORDER BY
           CASE br.priority WHEN 'EMERGENCY' THEN 1 WHEN 'URGENT' THEN 2 ELSE 3 END,
           br.request_date ASC
@@ -61,7 +60,7 @@ public class BloodRequestDAO {
         SELECT br.*, u.username as requester_name
         FROM blood_requests br
         JOIN users u ON br.requester_id = u.user_id
-        WHERE br.blood_group = ? AND br.status IN ('PENDING','MATCHING')
+        WHERE br.blood_group = ? AND br.status IN ('PENDING','MATCHING','AWAITING_CONFIRMATION')
         ORDER BY br.request_date DESC
         """;
 
@@ -85,9 +84,13 @@ public class BloodRequestDAO {
                 ps.setString(2, req.getBloodGroup() != null ? req.getBloodGroup().name() : "O_POSITIVE");
                 ps.setInt(3, req.getQuantity());
                 if (req.getHospitalId() != null) ps.setInt(4, req.getHospitalId()); else ps.setNull(4, Types.INTEGER);
-                ps.setString(5, req.getPriority() != null ? req.getPriority() : "NORMAL");
-                ps.setString(6, req.getStatus() != null ? req.getStatus() : "PENDING");
-                ps.setString(7, req.getNotes());
+                ps.setString(5, req.getHospitalName() != null ? req.getHospitalName() : "");
+                ps.setString(6, req.getRequesterType() != null ? req.getRequesterType() : "RECIPIENT");
+                ps.setString(7, req.getRequesterLocation() != null ? req.getRequesterLocation() : "");
+                ps.setString(8, req.getRequesterCity() != null ? req.getRequesterCity() : "");
+                ps.setString(9, req.getPriority() != null ? req.getPriority() : "NORMAL");
+                ps.setString(10, req.getStatus() != null ? req.getStatus() : "PENDING");
+                ps.setString(11, req.getNotes());
                 ps.executeUpdate();
 
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -214,6 +217,10 @@ public class BloodRequestDAO {
             .quantity(rs.getInt("quantity"))
             .priority(rs.getString("priority"))
             .status(rs.getString("status"))
+            .hospitalName(rs.getString("hospital_name"))
+            .requesterLocation(rs.getString("requester_location"))
+            .requesterCity(rs.getString("requester_city"))
+            .requesterType(rs.getString("requester_type"))
             .notes(rs.getString("notes"));
 
         // Blood group

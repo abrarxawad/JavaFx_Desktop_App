@@ -29,6 +29,23 @@ public class DatabaseInitializer {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseInitializer.class);
 
+    private static void addColumnIfMissing(Connection conn, String tableName, String columnName, String columnDefinition) {
+        try (var rs = conn.createStatement().executeQuery("PRAGMA table_info(" + tableName + ")")) {
+            boolean exists = false;
+            while (rs.next()) {
+                if (columnName.equalsIgnoreCase(rs.getString("name"))) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                conn.createStatement().execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnDefinition);
+            }
+        } catch (Exception e) {
+            logger.warn("Unable to add missing column {} on {}: {}", columnName, tableName, e.getMessage());
+        }
+    }
+
     public static void initialize() {
         try (var ctx = DatabaseManager.getInstance().getConnectionWrapper()) {
             Connection conn = ctx.getConnection();
@@ -147,21 +164,30 @@ public class DatabaseInitializer {
                 // ── 7. blood_requests ─────────────────────────────────────────
                 stmt.execute("""
                     CREATE TABLE IF NOT EXISTS blood_requests (
-                        request_id    INTEGER PRIMARY KEY AUTOINCREMENT,
-                        requester_id  INTEGER NOT NULL,
-                        blood_group   TEXT NOT NULL,
-                        quantity      INTEGER NOT NULL DEFAULT 1,
-                        hospital_id   INTEGER,
-                        priority      TEXT NOT NULL DEFAULT 'NORMAL',
-                        status        TEXT NOT NULL DEFAULT 'PENDING',
-                        request_date  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        required_date TIMESTAMP,
-                        notes         TEXT,
-                        updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        request_id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                        requester_id       INTEGER NOT NULL,
+                        blood_group        TEXT NOT NULL,
+                        quantity           INTEGER NOT NULL DEFAULT 1,
+                        hospital_id        INTEGER,
+                        hospital_name      TEXT DEFAULT '',
+                        requester_type     TEXT NOT NULL DEFAULT 'RECIPIENT',
+                        requester_location TEXT DEFAULT '',
+                        requester_city     TEXT DEFAULT '',
+                        priority           TEXT NOT NULL DEFAULT 'NORMAL',
+                        status             TEXT NOT NULL DEFAULT 'PENDING',
+                        request_date       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        required_date      TIMESTAMP,
+                        notes              TEXT,
+                        updated_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (requester_id) REFERENCES users(user_id) ON DELETE CASCADE,
                         FOREIGN KEY (hospital_id) REFERENCES hospitals(hospital_id) ON DELETE SET NULL
                     );
                     """);
+
+                addColumnIfMissing(conn, "blood_requests", "hospital_name", "TEXT DEFAULT ''");
+                addColumnIfMissing(conn, "blood_requests", "requester_type", "TEXT NOT NULL DEFAULT 'RECIPIENT'");
+                addColumnIfMissing(conn, "blood_requests", "requester_location", "TEXT DEFAULT ''");
+                addColumnIfMissing(conn, "blood_requests", "requester_city", "TEXT DEFAULT ''");
 
                 // ── 8. donations ──────────────────────────────────────────────
                 stmt.execute("""
@@ -212,17 +238,23 @@ public class DatabaseInitializer {
                     """);
 
                 // ── Seed: default admin ───────────────────────────────────────
-                // BCrypt hash of "Admin@1234" (cost=12)
+                // BCrypt hash generated from the real password "Admin@1234" (cost=12)
                 stmt.execute("""
-                    INSERT OR IGNORE INTO users
+                    INSERT INTO users
                         (username, email, password_hash, role, status)
                     VALUES (
                         'admin',
                         'admin@lifelink.local',
-                        '$2a$12$eG6cGhiT0RJKu2OPo7y7F.3jGBRdSZl9m1tWBz5cFXU7a4C3Zz7Ve',
+                        '$2a$12$u1wWOqukZIL8SJr56avITe4j18chX9S6eAQVtVhkQTy/Kh9PDqruu',
                         'ADMIN',
                         'ACTIVE'
-                    );
+                    )
+                    ON CONFLICT(username) DO UPDATE SET
+                        email = excluded.email,
+                        password_hash = excluded.password_hash,
+                        role = excluded.role,
+                        status = excluded.status,
+                        updated_at = CURRENT_TIMESTAMP;
                     """);
 
                 // ── Seed: sample blood bank ───────────────────────────────────

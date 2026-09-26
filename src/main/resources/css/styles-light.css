@@ -1,0 +1,118 @@
+.root {
+    -ll-bg-primary: #edf3fb;
+    -ll-bg-secondary: #e6eef9;
+    -ll-bg-card: #ffffff;
+    -ll-bg-card-hover: #f4f8ff;
+    -ll-bg-input: #f8fbff;
+    -ll-bg-sidebar: #e9f0fb;
+
+    -ll-accent: #d92d4d;
+    -ll-accent-dark: #b21938;
+    -ll-accent-light: #f76d85;
+    -ll-accent-glow: rgba(217,45,77,0.16);
+
+    -ll-teal: #0c8b8d;
+    -ll-teal-dark: #0d6e70;
+
+    -ll-success: #2f9e67;
+    -ll-warning: #d97706;
+    -ll-danger: #dc2626;
+    -ll-info: #2563eb;
+
+    -ll-text-primary: #142033;
+    -ll-text-secondary: #4f6078;
+    -ll-text-muted: #7587a0;
+    -ll-text-inverse: #f8fbff;
+
+    -ll-border: rgba(20,32,51,0.12);
+    -ll-border-focus: rgba(217,45,77,0.35);
+
+    -ll-shadow-sm: dropshadow(gaussian, rgba(15,23,42,0.12), 4, 0, 0, 2);
+    -ll-shadow-md: dropshadow(gaussian, rgba(15,23,42,0.18), 12, 0, 0, 4);
+    -ll-shadow-lg: dropshadow(gaussian, rgba(15,23,42,0.20), 24, 0, 0, 8);
+
+    -fx-background-color: -ll-bg-primary;
+    -fx-text-fill: -ll-text-primary;
+}
+
+.login-root,
+.register-root {
+    -fx-background-color: linear-gradient(to bottom, #eef5ff 0%, #edf3fb 100%);
+    -fx-background-image: none;
+}
+
+.login-bg {
+    -fx-background-color: rgba(255, 255, 255, 0.18);
+}
+
+.login-card {
+    -fx-background-color: rgba(255, 255, 255, 0.92);
+    -fx-border-color: rgba(217,45,77,0.2);
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.08), 28, 0, 0, 10);
+}
+
+.login-header {
+    -fx-background-color: linear-gradient(to bottom, rgba(217,45,77,0.08), rgba(255,255,255,0.0));
+}
+
+.login-text-field,
+.text-field,
+.combo-box,
+.search-bar {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: -ll-text-primary;
+    -fx-prompt-text-fill: -ll-text-muted;
+    -fx-border-color: -ll-border;
+}
+
+.login-text-field:focused,
+.text-field:focused,
+.combo-box:focused,
+.search-bar:focused {
+    -fx-border-color: -ll-accent;
+    -fx-background-color: #ffffff;
+}
+
+.login-btn-primary,
+.btn-primary {
+    -fx-background-color: linear-gradient(to right, #d92d4d, #b21938);
+    -fx-text-fill: white;
+}
+
+.btn-secondary {
+    -fx-background-color: rgba(20,32,51,0.04);
+    -fx-text-fill: -ll-text-primary;
+    -fx-border-color: -ll-border;
+}
+
+.theme-toggle-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ll-text-secondary;
+    -fx-border-color: -ll-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-padding: 6 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.theme-toggle-btn:hover {
+    -fx-background-color: rgba(20,32,51,0.04);
+}
+
+.login-link-text,
+.login-divider-text,
+.login-footer-text,
+.register-subtitle,
+.register-label {
+    -fx-text-fill: -ll-text-secondary;
+}
+
+.status-message {
+    -fx-text-fill: -ll-danger;
+}
+
+.status-message.success {
+    -fx-text-fill: -ll-success;
+}

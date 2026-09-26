@@ -8,7 +8,7 @@
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.lifelink.controller.RecipientDashboardController"
-            styleClass="main-border-pane">
+            styleClass="main-border-pane,dashboard-recipient-bg">
 
     <!-- ── Sidebar ── -->
     <left>
@@ -120,6 +120,17 @@
                         <VBox spacing="6" HBox.hgrow="ALWAYS">
                             <Label text="Quantity (units) *" styleClass="form-label"/>
                             <TextField fx:id="reqQuantity" styleClass="form-field" promptText="e.g. 2" text="1"/>
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="16">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Recipient Location" styleClass="form-label"/>
+                            <TextField fx:id="reqLocation" styleClass="form-field" promptText="Dhaka, Bangladesh"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Hospital / Facility" styleClass="form-label"/>
+                            <TextField fx:id="reqHospital" styleClass="form-field" promptText="City General Hospital"/>
                         </VBox>
                     </HBox>
 

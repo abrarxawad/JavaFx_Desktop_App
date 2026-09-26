@@ -1,23 +1,12 @@
--- =============================================================
--- LifeLink Blood Bank & Donor Navigation System
--- SQLite Schema Notes
--- =============================================================
--- This project initializes the SQLite database automatically on startup.
--- This file is a legacy reference only; the runtime database is created by
--- DatabaseInitializer and stored in lifelink.db at the project root.
--- =============================================================
+
 
 PRAGMA foreign_keys = ON;
 
--- =============================================================
--- TABLE: users
--- Central authentication table for every person/entity
--- =============================================================
 CREATE TABLE IF NOT EXISTS users (
     user_id       INT          NOT NULL AUTO_INCREMENT,
     username      VARCHAR(60)  NOT NULL,
     email         VARCHAR(120) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,          -- BCrypt hash
+    password_hash VARCHAR(255) NOT NULL,        
     role          ENUM(
                     'DONOR',
                     'RECIPIENT',
@@ -41,10 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX   idx_status      (status)
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: donors
--- Extended profile for users with role = 'DONOR'
--- =============================================================
+
 CREATE TABLE IF NOT EXISTS donors (
     donor_id           INT          NOT NULL AUTO_INCREMENT,
     user_id            INT          NOT NULL,
@@ -82,10 +68,7 @@ CREATE TABLE IF NOT EXISTS donors (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: recipients
--- Extended profile for users with role = 'RECIPIENT'
--- =============================================================
+
 CREATE TABLE IF NOT EXISTS recipients (
     recipient_id INT          NOT NULL AUTO_INCREMENT,
     user_id      INT          NOT NULL,
@@ -111,12 +94,9 @@ CREATE TABLE IF NOT EXISTS recipients (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: hospitals
--- =============================================================
 CREATE TABLE IF NOT EXISTS hospitals (
     hospital_id  INT          NOT NULL AUTO_INCREMENT,
-    user_id      INT          NULL,                       -- optional linked account
+    user_id      INT          NULL,                    
     name         VARCHAR(120) NOT NULL,
     address      VARCHAR(255) NOT NULL,
     city         VARCHAR(80)  NOT NULL,
@@ -135,12 +115,9 @@ CREATE TABLE IF NOT EXISTS hospitals (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: blood_banks
--- =============================================================
 CREATE TABLE IF NOT EXISTS blood_banks (
     blood_bank_id INT          NOT NULL AUTO_INCREMENT,
-    user_id       INT          NULL,                       -- optional linked account
+    user_id       INT          NULL,                  
     name          VARCHAR(120) NOT NULL,
     address       VARCHAR(255) NOT NULL,
     city          VARCHAR(80)  NOT NULL,
@@ -159,10 +136,7 @@ CREATE TABLE IF NOT EXISTS blood_banks (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: blood_inventory
--- Each row = a batch of one blood group at one blood bank
--- =============================================================
+
 CREATE TABLE IF NOT EXISTS blood_inventory (
     inventory_id    INT          NOT NULL AUTO_INCREMENT,
     blood_bank_id   INT          NOT NULL,
@@ -196,10 +170,7 @@ CREATE TABLE IF NOT EXISTS blood_inventory (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: blood_requests
--- Created by recipients or hospitals
--- =============================================================
+
 CREATE TABLE IF NOT EXISTS blood_requests (
     request_id    INT          NOT NULL AUTO_INCREMENT,
     requester_id  INT          NOT NULL,               -- users.user_id
@@ -244,10 +215,7 @@ CREATE TABLE IF NOT EXISTS blood_requests (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: donor_matches
--- Results produced by the matching engine for each request
--- =============================================================
+
 CREATE TABLE IF NOT EXISTS donor_matches (
     match_id     INT           NOT NULL AUTO_INCREMENT,
     request_id   INT           NOT NULL,
@@ -275,10 +243,7 @@ CREATE TABLE IF NOT EXISTS donor_matches (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: donations
--- Actual donation records after a donor fulfils a request
--- =============================================================
+
 CREATE TABLE IF NOT EXISTS donations (
     donation_id     INT     NOT NULL AUTO_INCREMENT,
     donor_id        INT     NOT NULL,
@@ -316,10 +281,7 @@ CREATE TABLE IF NOT EXISTS donations (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: notifications
--- In-app notification messages for any user
--- =============================================================
+
 CREATE TABLE IF NOT EXISTS notifications (
     notification_id INT          NOT NULL AUTO_INCREMENT,
     user_id         INT          NOT NULL,
@@ -348,10 +310,7 @@ CREATE TABLE IF NOT EXISTS notifications (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: audit_logs
--- Immutable record of all critical application actions
--- =============================================================
+
 CREATE TABLE IF NOT EXISTS audit_logs (
     log_id      INT          NOT NULL AUTO_INCREMENT,
     user_id     INT          NULL,                      -- NULL for system actions
@@ -371,10 +330,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- =============================================================
--- TABLE: app_config
--- Key-value store for runtime configuration
--- =============================================================
+
 CREATE TABLE IF NOT EXISTS app_config (
     config_key   VARCHAR(80)  NOT NULL,
     config_value VARCHAR(255) NOT NULL,
@@ -385,25 +341,18 @@ CREATE TABLE IF NOT EXISTS app_config (
     PRIMARY KEY (config_key)
 ) ENGINE=InnoDB;
 
--- =============================================================
--- SEED DATA: Default admin account
--- Password: Admin@1234  (BCrypt hash generated externally)
--- Change password on first login!
--- =============================================================
+
 INSERT IGNORE INTO users
     (username, email, password_hash, role, status)
 VALUES (
     'admin',
     'admin@lifelink.local',
-    -- BCrypt hash of "Admin@1234" (cost=12)
     '$2a$12$eG6cGhiT0RJKu2OPo7y7F.3jGBRdSZl9m1tWBz5cFXU7a4C3Zz7Ve',
     'ADMIN',
     'ACTIVE'
 );
 
--- =============================================================
--- SEED DATA: Default configuration values
--- =============================================================
+
 INSERT IGNORE INTO app_config (config_key, config_value, description) VALUES
 ('inventory.low_stock_threshold',    '5',    'Units below this value trigger LOW STOCK warning'),
 ('inventory.expiry_warning_days',    '7',    'Days before expiry to trigger EXPIRING SOON warning'),
@@ -412,6 +361,4 @@ INSERT IGNORE INTO app_config (config_key, config_value, description) VALUES
 ('matching.min_score_threshold',     '40',   'Minimum match score (0-100) to include a donor'),
 ('scheduler.inventory_check_mins',   '30',   'How often (minutes) the inventory monitor runs');
 
--- =============================================================
--- END OF SCHEMA
--- =============================================================
+

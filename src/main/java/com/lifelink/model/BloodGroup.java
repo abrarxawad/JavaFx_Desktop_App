@@ -1,5 +1,8 @@
 package com.lifelink.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * All supported human blood groups.
  *
@@ -27,6 +30,7 @@ public enum BloodGroup {
     }
 
     /** Returns the medical notation string, e.g. {@code "AB+"}. */
+    @JsonValue
     public String getLabel() {
         return label;
     }
@@ -38,9 +42,13 @@ public enum BloodGroup {
      * @return matching {@code BloodGroup}
      * @throws IllegalArgumentException if label is not recognised
      */
+    @JsonCreator
     public static BloodGroup fromLabel(String label) {
+        if (label == null || label.isBlank()) {
+            return O_POSITIVE;
+        }
         for (BloodGroup bg : values()) {
-            if (bg.label.equalsIgnoreCase(label)) {
+            if (bg.label.equalsIgnoreCase(label) || bg.name().equalsIgnoreCase(label)) {
                 return bg;
             }
         }

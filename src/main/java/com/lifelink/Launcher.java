@@ -1,12 +1,15 @@
 package com.lifelink;
 
 /**
- * A workaround launcher class to avoid the "JavaFX runtime components are missing" error
- * when running the application directly from IntelliJ IDEA's run button.
+ * Compatibility launcher for IDEs that do not automatically detect the JavaFX
+ * application entry point.
  *
- * <p>By using a class that does not extend javafx.application.Application as the
- * entry point, the JVM loads the JavaFX dependencies from the classpath automatically.
+ * <p>The real application entry point is {@link Main}, which extends
+ * {@code javafx.application.Application}. This class simply delegates to it so
+ * the project can still be launched from the IDE or from a command line if the
+ * default run configuration points here.
  */
+@Deprecated(forRemoval = false)
 public class Launcher {
     public static void main(String[] args) {
         Main.main(args);

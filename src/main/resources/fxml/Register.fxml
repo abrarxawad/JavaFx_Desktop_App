@@ -8,31 +8,31 @@
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.lifelink.controller.RegisterController"
-      styleClass="login-root"
+      styleClass="register-root"
       alignment="CENTER"
       spacing="15">
     <padding><Insets top="40" right="40" bottom="40" left="40"/></padding>
 
-    <Label text="🩸 LifeLink — Create Account" style="-fx-font-size:24; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
-    <Label text="Register to manage blood donations or requests." style="-fx-text-fill:#8892b0;"/>
-    
-    <VBox spacing="5" maxWidth="300">
-        <Label text="Username" style="-fx-text-fill:#a8b2d1;"/>
-        <TextField fx:id="usernameField" promptText="Enter a unique username" styleClass="text-field"/>
+    <Label text="🩸 LifeLink — Create Account" styleClass="login-app-name"/>
+    <Label text="Register to manage blood donations or requests." styleClass="login-subtitle"/>
+
+    <VBox spacing="5" maxWidth="320">
+        <Label text="Username" styleClass="login-field-label"/>
+        <TextField fx:id="usernameField" promptText="Enter a unique username" styleClass="login-text-field"/>
     </VBox>
 
-    <VBox spacing="5" maxWidth="300">
-        <Label text="Email" style="-fx-text-fill:#a8b2d1;"/>
-        <TextField fx:id="emailField" promptText="Enter your email" styleClass="text-field"/>
+    <VBox spacing="5" maxWidth="320">
+        <Label text="Email" styleClass="login-field-label"/>
+        <TextField fx:id="emailField" promptText="Enter your email" styleClass="login-text-field"/>
     </VBox>
 
-    <VBox spacing="5" maxWidth="300">
-        <Label text="Password" style="-fx-text-fill:#a8b2d1;"/>
-        <PasswordField fx:id="passwordField" promptText="Enter a strong password" styleClass="text-field"/>
+    <VBox spacing="5" maxWidth="320">
+        <Label text="Password" styleClass="login-field-label"/>
+        <PasswordField fx:id="passwordField" promptText="Enter a strong password" styleClass="login-text-field"/>
     </VBox>
 
-    <VBox spacing="5" maxWidth="300">
-        <Label text="Account Type" style="-fx-text-fill:#a8b2d1;"/>
+    <VBox spacing="5" maxWidth="320">
+        <Label text="Account Type" styleClass="login-field-label"/>
         <ComboBox fx:id="roleComboBox" promptText="Select your role" maxWidth="Infinity" styleClass="combo-box">
             <items>
                 <FXCollections fx:factory="observableArrayList">
@@ -45,9 +45,14 @@
         </ComboBox>
     </VBox>
 
-    <Label fx:id="statusMessage" text="" style="-fx-text-fill:#e06c75; -fx-font-size:13;"/>
+    <VBox fx:id="bloodGroupSection" spacing="5" maxWidth="320" visible="true" managed="true">
+        <Label text="Blood Group" styleClass="login-field-label"/>
+        <ComboBox fx:id="bloodGroupComboBox" promptText="Select your blood group" maxWidth="Infinity" styleClass="combo-box"/>
+    </VBox>
 
-    <HBox spacing="20" alignment="CENTER" maxWidth="300">
+    <Label fx:id="statusMessage" text="" styleClass="login-error-label" visible="false" managed="false"/>
+
+    <HBox spacing="20" alignment="CENTER" maxWidth="320">
         <Button fx:id="backToLoginBtn" text="Cancel" styleClass="btn-secondary" onAction="#handleBack" prefWidth="140"/>
         <Button fx:id="registerBtn" text="Create Account" styleClass="btn-primary" onAction="#handleRegister" prefWidth="140"/>
     </HBox>

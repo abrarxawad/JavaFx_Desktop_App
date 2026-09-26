@@ -88,6 +88,8 @@ public class DonorDashboardController extends BaseDashboardController implements
 
     // ── Dependencies ──────────────────────────────────────────────────────────
 
+    private static final Logger logger = LoggerFactory.getLogger(DonorDashboardController.class);
+
     private final DonorDAO         donorDAO     = new DonorDAO();
     private final DonationDAO      donationDAO  = new DonationDAO();
     private final BloodRequestDAO  requestDAO   = new BloodRequestDAO();
@@ -105,6 +107,15 @@ public class DonorDashboardController extends BaseDashboardController implements
 
         setupHistoryTable();
         setupRequestsTable();
+        requestsTable.setRowFactory(tv -> {
+            TableRow<BloodRequest> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getClickCount() == 2) {
+                    openRequestActionDialog(row.getItem());
+                }
+            });
+            return row;
+        });
         loadDonorData();
     }
 
@@ -233,6 +244,60 @@ public class DonorDashboardController extends BaseDashboardController implements
         colReqBy.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getRequesterName()));
         colReqDate.setCellValueFactory(c -> new SimpleStringProperty(
                 c.getValue().getRequestDate() != null ? c.getValue().getRequestDate().toLocalDate().toString() : "—"));
+    }
+
+    private void openRequestActionDialog(BloodRequest request) {
+        if (request == null) return;
+
+        String details = "Request ID: " + request.getRequestId() + "\n"
+                + "Requested By: " + (request.getRequesterName() != null ? request.getRequesterName() : "Unknown") + "\n"
+                + "Blood Group: " + (request.getBloodGroup() != null ? request.getBloodGroup().getLabel() : "—") + "\n"
+                + "Quantity: " + request.getQuantity() + " units\n"
+                + "Location: " + (request.getRequesterLocation() != null && !request.getRequesterLocation().isBlank() ? request.getRequesterLocation() : "Not provided") + "\n"
+                + "Hospital: " + (request.getHospitalName() != null && !request.getHospitalName().isBlank() ? request.getHospitalName() : "Not provided") + "\n"
+                + "Notes: " + (request.getNotes() != null ? request.getNotes() : "—");
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Incoming Blood Request");
+        alert.setHeaderText("Request from " + (request.getRequesterName() != null ? request.getRequesterName() : "a donor match"));
+        alert.setContentText(details);
+
+        ButtonType accept = new ButtonType("Accept Request");
+        ButtonType markDone = new ButtonType("Mark Donation Done");
+        ButtonType dismiss = new ButtonType("Dismiss Request");
+
+        if (BloodRequest.STATUS_PENDING.equalsIgnoreCase(request.getStatus())
+                || BloodRequest.STATUS_MATCHING.equalsIgnoreCase(request.getStatus())) {
+            alert.getButtonTypes().setAll(accept, markDone, dismiss, ButtonType.CLOSE);
+        } else if (BloodRequest.STATUS_AWAITING_CONFIRMATION.equalsIgnoreCase(request.getStatus())) {
+            alert.getButtonTypes().setAll(markDone, dismiss, ButtonType.CLOSE);
+        } else {
+            alert.getButtonTypes().setAll(ButtonType.CLOSE);
+        }
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isEmpty()) return;
+
+        if (result.get() == accept) {
+            requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_MATCHING);
+            showRequests(null);
+        } else if (result.get() == markDone) {
+            requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_AWAITING_CONFIRMATION);
+            DonationDAO.DonationRecord rec = new DonationDAO.DonationRecord();
+            rec.donorId = currentDonor.getDonorId();
+            rec.bloodGroup = currentDonor.getBloodGroup() != null ? currentDonor.getBloodGroup().name() : "O_POSITIVE";
+            rec.donationDate = LocalDate.now();
+            rec.quantityMl = 450;
+            rec.status = "PENDING_CONFIRMATION";
+            rec.bloodBankId = 1;
+            rec.requestId = request.getRequestId();
+            donationDAO.recordDonation(rec);
+            showRequests(null);
+            loadHistory();
+        } else if (result.get() == dismiss) {
+            requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_CANCELLED);
+            showRequests(null);
+        }
     }
 
     // ── Profile editing ───────────────────────────────────────────────────────

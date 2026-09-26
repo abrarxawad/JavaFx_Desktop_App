@@ -2,8 +2,10 @@ package com.lifelink.controller;
 
 import com.lifelink.dao.UserDAO;
 import com.lifelink.exception.DatabaseException;
+import com.lifelink.model.BloodGroup;
 import com.lifelink.model.UserRole;
 import com.lifelink.security.PasswordHasher;
+import com.lifelink.util.ThemeManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,6 +16,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +38,8 @@ public class RegisterController {
     @FXML private TextField emailField;
     @FXML private PasswordField passwordField;
     @FXML private ComboBox<String> roleComboBox;
+    @FXML private ComboBox<String> bloodGroupComboBox;
+    @FXML private VBox bloodGroupSection;
     @FXML private Label statusMessage;
     @FXML private Button backToLoginBtn;
     @FXML private Button registerBtn;
@@ -43,8 +48,28 @@ public class RegisterController {
 
     @FXML
     public void initialize() {
-        // Default to DONOR if not selected
+        roleComboBox.getItems().setAll("DONOR", "RECIPIENT", "HOSPITAL", "BLOOD_BANK");
+        bloodGroupComboBox.getItems().setAll(
+            BloodGroup.A_POSITIVE.getLabel(),
+            BloodGroup.A_NEGATIVE.getLabel(),
+            BloodGroup.B_POSITIVE.getLabel(),
+            BloodGroup.B_NEGATIVE.getLabel(),
+            BloodGroup.AB_POSITIVE.getLabel(),
+            BloodGroup.AB_NEGATIVE.getLabel(),
+            BloodGroup.O_POSITIVE.getLabel(),
+            BloodGroup.O_NEGATIVE.getLabel()
+        );
+        bloodGroupComboBox.getSelectionModel().select(BloodGroup.O_POSITIVE.getLabel());
         roleComboBox.getSelectionModel().select("DONOR");
+
+        roleComboBox.valueProperty().addListener((obs, oldVal, newVal) -> updateBloodGroupVisibility());
+        updateBloodGroupVisibility();
+    }
+
+    private void updateBloodGroupVisibility() {
+        boolean donorRole = "DONOR".equals(roleComboBox.getValue());
+        bloodGroupSection.setVisible(donorRole);
+        bloodGroupSection.setManaged(donorRole);
     }
 
     @FXML
@@ -57,10 +82,16 @@ public class RegisterController {
         String email = emailField.getText().trim();
         String password = passwordField.getText();
         String roleStr = roleComboBox.getValue();
+        String bloodGroupValue = bloodGroupComboBox.getValue();
 
         // 1. Validation
         if (username.isEmpty() || email.isEmpty() || password.isEmpty() || roleStr == null) {
             statusMessage.setText("All fields are required.");
+            return;
+        }
+
+        if ("DONOR".equals(roleStr) && (bloodGroupValue == null || bloodGroupValue.isBlank())) {
+            statusMessage.setText("Please select a blood group for donor registration.");
             return;
         }
 
@@ -84,10 +115,14 @@ public class RegisterController {
                 java.sql.PreparedStatement ps = null;
                 switch (role) {
                     case DONOR -> {
-                        ps = conn.prepareStatement("INSERT INTO donors (user_id, first_name, last_name, blood_group, date_of_birth, gender, phone) VALUES (?, 'Unknown', 'User', 'O_POSITIVE', '2000-01-01', 'Other', '')");
+                        String donorBloodGroup = BloodGroup.fromLabel(bloodGroupValue).name();
+                        ps = conn.prepareStatement("INSERT INTO donors (user_id, first_name, last_name, blood_group, date_of_birth, gender, phone) VALUES (?, 'Unknown', 'User', ?, '2000-01-01', 'Other', '')");
+                        ps.setInt(1, userId);
+                        ps.setString(2, donorBloodGroup);
                     }
                     case RECIPIENT -> {
                         ps = conn.prepareStatement("INSERT INTO recipients (user_id, first_name, last_name, blood_group, phone) VALUES (?, 'Unknown', 'User', 'O_POSITIVE', '')");
+                        ps.setInt(1, userId);
                     }
                     case BLOOD_BANK -> {
                         ps = conn.prepareStatement("INSERT INTO blood_banks (user_id, name) VALUES (?, ?)");
@@ -101,9 +136,6 @@ public class RegisterController {
                     }
                 }
                 if (ps != null) {
-                    if (role == UserRole.DONOR || role == UserRole.RECIPIENT) {
-                        ps.setInt(1, userId);
-                    }
                     ps.executeUpdate();
                     ps.close();
                 }
@@ -134,9 +166,7 @@ public class RegisterController {
             Parent root = loader.load();
             Stage stage = (Stage) backToLoginBtn.getScene().getWindow();
             Scene scene = new Scene(root, stage.getWidth(), stage.getHeight());
-            scene.getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
-            );
+            ThemeManager.applyTheme(scene);
             stage.setScene(scene);
         } catch (IOException e) {
             logger.error("Failed to load Login screen: {}", e.getMessage());

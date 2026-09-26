@@ -8,6 +8,7 @@ import com.lifelink.model.UserRole;
 import com.lifelink.security.PasswordHasher;
 import com.lifelink.security.SessionManager;
 import com.lifelink.dao.UserDAO;
+import com.lifelink.util.ThemeManager;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -34,18 +35,7 @@ import java.util.ResourceBundle;
 
 /**
  * Controller for the Login screen (Login.fxml).
- *
- * <p><b>JavaFX MVC:</b> This controller sits between the FXML view and the
- * service/DAO layer. It handles user input events, delegates to the UserDAO
- * for authentication, and navigates to the appropriate dashboard.
- *
- * <p><b>Concurrency:</b> The login action runs on a background {@link Task}
- * (not the JavaFX Application Thread) because:
- * <ol>
- *   <li>JDBC operations can block for tens of milliseconds — running them on
- *       the UI thread would freeze the interface.</li>
- *   <li>BCrypt.verify() is intentionally slow (hashing algorithm) — it can
- *       take 100–500ms and must not block the UI thread.</li>
+ 
  * </ol>
  * {@link Platform#runLater(Runnable)} is used to update UI components from
  * the background thread safely.
@@ -56,7 +46,7 @@ public class LoginController implements Initializable {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
-    // ── FXML injected nodes ───────────────────────────────────────────────────
+    // ── FXML injected nodes 
     @FXML private VBox         loginCard;
     @FXML private TextField    usernameField;
     @FXML private PasswordField passwordField;
@@ -64,28 +54,28 @@ public class LoginController implements Initializable {
     @FXML private Button       registerButton;
     @FXML private Label        errorLabel;
 
-    // ── Dependencies ──────────────────────────────────────────────────────────
+    // ── Dependencies 
     private final UserDAO        userDAO        = new UserDAO();
     private final SessionManager sessionManager = SessionManager.getInstance();
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // ── Play a fade-in animation on the card ─────────────────────────────
+        // ── Play a fade-in animation on the card 
         FadeTransition fade = new FadeTransition(Duration.millis(600), loginCard);
         fade.setFromValue(0.0);
         fade.setToValue(1.0);
         fade.play();
 
-        // ── Allow Enter key to trigger login ─────────────────────────────────
+        // ── Allow Enter key to trigger login 
         passwordField.setOnAction(this::handleLogin);
         usernameField.setOnAction(e -> passwordField.requestFocus());
 
-        // ── Hide error when user starts typing ────────────────────────────────
+        // ── Hide error when user starts typing 
         usernameField.textProperty().addListener((obs, o, n) -> hideError());
         passwordField.textProperty().addListener((obs, o, n) -> hideError());
     }
 
-    // ── Login Action ──────────────────────────────────────────────────────────
+    // ── Login Action 
 
     /**
      * Handles the Sign In button click.
@@ -98,7 +88,7 @@ public class LoginController implements Initializable {
         String username = usernameField.getText().trim();
         String password = passwordField.getText();
 
-        // ── Client-side validation ────────────────────────────────────────────
+        // ── Client-side validation 
         if (username.isEmpty()) {
             showError("Please enter your username.");
             usernameField.requestFocus();
@@ -110,10 +100,10 @@ public class LoginController implements Initializable {
             return;
         }
 
-        // ── Disable form while processing ─────────────────────────────────────
+        // ── Disable form while processing 
         setFormDisabled(true);
 
-        // ── Background authentication task ────────────────────────────────────
+        // ── Background authentication task 
         // Reason: JDBC + BCrypt must not run on the JavaFX UI thread
         Task<User> authTask = new Task<>() {
             @Override
@@ -144,7 +134,7 @@ public class LoginController implements Initializable {
             }
         };
 
-        // ── On success: navigate to correct dashboard ──────────────────────────
+        //  On success: navigate to correct dashboard 
         authTask.setOnSucceeded(e -> {
             User user = authTask.getValue();
             sessionManager.login(user);
@@ -153,7 +143,7 @@ public class LoginController implements Initializable {
             navigateToDashboard(user.getRole());
         });
 
-        // ── On failure: show error message ────────────────────────────────────
+        //  On failure: show error message 
         authTask.setOnFailed(e -> {
             setFormDisabled(false);
             Throwable ex = authTask.getException();
@@ -174,7 +164,7 @@ public class LoginController implements Initializable {
         authThread.start();
     }
 
-    // ── Register Action ───────────────────────────────────────────────────────
+    //  Register Action 
 
     @FXML
     private void handleRegister(ActionEvent event) {
@@ -186,7 +176,7 @@ public class LoginController implements Initializable {
         }
     }
 
-    // ── Dashboard Navigation ──────────────────────────────────────────────────
+    //  Dashboard Navigation 
 
     /**
      * Routes the user to the correct dashboard based on their role.
@@ -212,7 +202,7 @@ public class LoginController implements Initializable {
         });
     }
 
-    // ── Scene Navigation Helper ───────────────────────────────────────────────
+    //  Scene Navigation Helper 
 
     private void navigateToScene(String fxmlPath) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
@@ -220,15 +210,13 @@ public class LoginController implements Initializable {
 
         Stage stage = (Stage) loginButton.getScene().getWindow();
         Scene scene = new Scene(root, stage.getWidth(), stage.getHeight());
-        scene.getStylesheets().add(
-            getClass().getResource("/css/styles.css").toExternalForm()
-        );
+        ThemeManager.applyTheme(scene);
 
         stage.setScene(scene);
         stage.setMaximized(true);
     }
 
-    // ── UI helpers ────────────────────────────────────────────────────────────
+    //  UI helpers 
 
     private void showError(String message) {
         errorLabel.setText(message);

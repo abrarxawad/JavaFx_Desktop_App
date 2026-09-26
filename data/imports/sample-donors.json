@@ -1,0 +1,36 @@
+[
+  {
+    "username": "amara.silva",
+    "email": "amara.silva@lifelink.local",
+    "firstName": "Amara",
+    "lastName": "Silva",
+    "bloodGroup": "A+",
+    "dateOfBirth": "1992-04-12",
+    "gender": "FEMALE",
+    "phone": "+94711234567",
+    "address": "18 Lake Road",
+    "city": "Colombo",
+    "latitude": 6.9271,
+    "longitude": 79.8612,
+    "available": true,
+    "eligibilityStatus": "ELIGIBLE",
+    "totalDonations": 3
+  },
+  {
+    "username": "daniel.rana",
+    "email": "daniel.rana@lifelink.local",
+    "firstName": "Daniel",
+    "lastName": "Rana",
+    "bloodGroup": "O-",
+    "dateOfBirth": "1988-11-22",
+    "gender": "MALE",
+    "phone": "+94719876543",
+    "address": "34 Park Avenue",
+    "city": "Kandy",
+    "latitude": 7.2906,
+    "longitude": 80.6337,
+    "available": true,
+    "eligibilityStatus": "ELIGIBLE",
+    "totalDonations": 5
+  }
+]

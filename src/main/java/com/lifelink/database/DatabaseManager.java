@@ -39,17 +39,17 @@ public class DatabaseManager {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseManager.class);
 
-    // ── Singleton instance (volatile for correct double-checked locking) ──────
+    //  Singleton instance (volatile for correct double-checked locking) 
     private static volatile DatabaseManager instance;
 
-    // ── Connection pool ───────────────────────────────────────────────────────
+    //  Connection pool 
     private final BlockingQueue<Connection> connectionPool;
     private final String    jdbcUrl;
     private final String    dbUsername;
     private final String    dbPassword;
     private final int       poolSize;
 
-    // ── Private constructor (Singleton pattern) ───────────────────────────────
+    //  Private constructor (Singleton pattern) 
     private DatabaseManager() {
         Properties props = loadProperties();
         this.jdbcUrl    = props.getProperty("db.url");
@@ -62,7 +62,7 @@ public class DatabaseManager {
         logger.info("DatabaseManager initialised. Pool size: {}", poolSize);
     }
 
-    // ── Public accessor (double-checked locking for thread safety) ────────────
+    //  Public accessor (double-checked locking for thread safety) 
 
     /**
      * Returns the single instance of {@code DatabaseManager}.
@@ -79,7 +79,7 @@ public class DatabaseManager {
         return instance;
     }
 
-    // ── Pool initialisation ───────────────────────────────────────────────────
+    //  Pool initialisation 
 
     private void initPool() {
         for (int i = 0; i < poolSize; i++) {
@@ -108,7 +108,7 @@ public class DatabaseManager {
         }
     }
 
-    // ── Connection borrow / return ────────────────────────────────────────────
+    //  Connection borrow / return 
 
     /**
      * Borrows a connection from the pool.
@@ -173,7 +173,7 @@ public class DatabaseManager {
         return new ConnectionWrapper(getConnection(), this);
     }
 
-    // ── Shutdown ──────────────────────────────────────────────────────────────
+    //  Shutdown 
 
     /**
      * Closes all pooled connections. Call this when the application exits.
@@ -189,7 +189,7 @@ public class DatabaseManager {
         connectionPool.clear();
     }
 
-    // ── Properties loader ─────────────────────────────────────────────────────
+    //  Properties loader 
 
     private Properties loadProperties() {
         Properties props = new Properties();
@@ -207,7 +207,7 @@ public class DatabaseManager {
         return props;
     }
 
-    // ── Inner class: auto-closeable connection wrapper ────────────────────────
+    //  Inner class: auto-closeable connection wrapper 
 
     /**
      * Wraps a {@link Connection} so it is automatically returned to the pool

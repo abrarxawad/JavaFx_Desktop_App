@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +52,13 @@ public class BloodInventoryDAO {
     private static final String SQL_TOTAL_AVAILABLE_BY_BANK =
         "SELECT blood_group, SUM(quantity) as total FROM blood_inventory " +
         "WHERE blood_bank_id = ? AND status = 'AVAILABLE' GROUP BY blood_group";
+
+    private static final String SQL_FIND_AVAILABLE_BY_GROUP = """
+        SELECT inventory_id, blood_group, quantity, expiry_date, status
+        FROM blood_inventory
+        WHERE blood_bank_id = ? AND blood_group = ? AND status = 'AVAILABLE'
+        ORDER BY expiry_date ASC, inventory_id ASC
+        """;
 
     private static final String SQL_MARK_EXPIRED =
         "UPDATE blood_inventory SET status = 'EXPIRED' " +
@@ -117,6 +123,65 @@ public class BloodInventoryDAO {
             throw new DatabaseException("Error fetching all inventory: " + e.getMessage(), e);
         }
         return list;
+    }
+
+    public boolean hasAvailableStock(int bloodBankId, BloodGroup bloodGroup, int quantityNeeded) {
+        if (bloodGroup == null || quantityNeeded <= 0) return false;
+        try (var ctx = dbManager.getConnectionWrapper()) {
+            Connection conn = ctx.getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(SQL_FIND_AVAILABLE_BY_GROUP)) {
+                ps.setInt(1, bloodBankId);
+                ps.setString(2, bloodGroup.name());
+                try (ResultSet rs = ps.executeQuery()) {
+                    int total = 0;
+                    while (rs.next()) {
+                        total += rs.getInt("quantity");
+                    }
+                    return total >= quantityNeeded;
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error checking blood inventory: " + e.getMessage(), e);
+        }
+    }
+
+    public int consumeAvailableStock(int bloodBankId, BloodGroup bloodGroup, int quantityNeeded) {
+        if (bloodGroup == null || quantityNeeded <= 0) {
+            throw new IllegalArgumentException("Blood group and positive quantity are required.");
+        }
+        if (!hasAvailableStock(bloodBankId, bloodGroup, quantityNeeded)) {
+            throw new IllegalArgumentException("Insufficient blood inventory for " + bloodGroup.name());
+        }
+
+        int remaining = quantityNeeded;
+        try (var ctx = dbManager.getConnectionWrapper()) {
+            Connection conn = ctx.getConnection();
+            try (PreparedStatement batchPs = conn.prepareStatement(SQL_FIND_AVAILABLE_BY_GROUP)) {
+                batchPs.setInt(1, bloodBankId);
+                batchPs.setString(2, bloodGroup.name());
+                try (ResultSet rs = batchPs.executeQuery()) {
+                    while (rs.next() && remaining > 0) {
+                        int inventoryId = rs.getInt("inventory_id");
+                        int currentQty = rs.getInt("quantity");
+                        int take = Math.min(currentQty, remaining);
+                        int newQty = currentQty - take;
+                        if (newQty <= 0) {
+                            updateStatus(inventoryId, BloodInventory.STATUS_ISSUED);
+                        } else {
+                            updateQuantity(inventoryId, newQty);
+                        }
+                        remaining -= take;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error reserving blood inventory: " + e.getMessage(), e);
+        }
+
+        if (remaining != 0) {
+            throw new IllegalArgumentException("Unable to reserve the full quantity for " + bloodGroup.name());
+        }
+        return quantityNeeded;
     }
 
     /**

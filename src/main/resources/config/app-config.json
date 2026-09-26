@@ -1,0 +1,7 @@
+{
+  "emergencyMatchingRadiusKm": 25.0,
+  "lowStockThreshold": 8,
+  "notificationsEnabled": true,
+  "emailAlertsEnabled": true,
+  "smsAlertsEnabled": true
+}

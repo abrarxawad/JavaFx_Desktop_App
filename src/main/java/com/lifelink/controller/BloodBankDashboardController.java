@@ -23,17 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-/**
- * Controller for the Blood Bank Dashboard.
- *
- * <p>Manages overview (per-group totals), full inventory table,
- * add stock form, and incoming blood request list.
- *
- * <p><b>Package:</b> com.lifelink.controller
+/*
+ Controller for the Blood Bank Dashboard.
  */
 public class BloodBankDashboardController extends BaseDashboardController implements Initializable {
 
-    // ── FXML nodes ────────────────────────────────────────────────────────────
+    // FXML nodes 
     @FXML private Label topbarTitle;
     @FXML private Label topbarUserName;
 
@@ -74,14 +69,14 @@ public class BloodBankDashboardController extends BaseDashboardController implem
     @FXML private TableColumn<BloodRequest, String>   colReqBy;
     @FXML private TableColumn<BloodRequest, String>   colReqDate;
 
-    // ── Dependencies ──────────────────────────────────────────────────────────
+    //  Dependencies
     private final BloodInventoryDAO inventoryDAO = new BloodInventoryDAO();
     private final BloodRequestDAO   requestDAO   = new BloodRequestDAO();
 
     // The blood_bank_id associated with this user (default 1 for seed bank)
     private int bloodBankId = 1;
 
-    // ── Initialize ────────────────────────────────────────────────────────────
+    // Initialize
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -94,10 +89,18 @@ public class BloodBankDashboardController extends BaseDashboardController implem
 
         setupInventoryTable();
         setupRequestsTable();
+        reqTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() >= 2) {
+                BloodRequest selected = reqTable.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    openRequestDecisionDialog(selected);
+                }
+            }
+        });
         loadOverview();
     }
 
-    // ── Panel switching ───────────────────────────────────────────────────────
+    //Panel switching 
 
     @FXML private void showOverview(ActionEvent e)   { switchPanel("overview");   loadOverview(); }
     @FXML private void showInventory(ActionEvent e)  { switchPanel("inventory");  loadInventoryTable(); }
@@ -117,7 +120,7 @@ public class BloodBankDashboardController extends BaseDashboardController implem
         }
     }
 
-    // ── Data loading ──────────────────────────────────────────────────────────
+    // Data loading 
 
     @FXML
     public void loadOverview() {
@@ -170,7 +173,7 @@ public class BloodBankDashboardController extends BaseDashboardController implem
         Thread t = new Thread(task, "load-req"); t.setDaemon(true); t.start();
     }
 
-    // ── Add stock ─────────────────────────────────────────────────────────────
+    // Add stock 
 
     @FXML
     private void handleAddStock(ActionEvent event) {
@@ -237,7 +240,65 @@ public class BloodBankDashboardController extends BaseDashboardController implem
         Thread t = new Thread(task, "mark-expired"); t.setDaemon(true); t.start();
     }
 
-    // ── Table setup ───────────────────────────────────────────────────────────
+    // Table setup 
+
+    private void openRequestDecisionDialog(BloodRequest request) {
+        if (request == null) return;
+
+        String details = "Request ID: " + request.getRequestId() + "\n"
+                + "Requester: " + (request.getRequesterName() != null ? request.getRequesterName() : "Unknown") + "\n"
+                + "Type: " + (request.getRequesterType() != null ? request.getRequesterType() : "RECIPIENT") + "\n"
+                + "Blood Group: " + (request.getBloodGroup() != null ? request.getBloodGroup().getLabel() : "—") + "\n"
+                + "Quantity: " + request.getQuantity() + " units\n"
+                + "Location: " + (request.getRequesterLocation() != null && !request.getRequesterLocation().isBlank() ? request.getRequesterLocation() : "Not provided") + "\n"
+                + "Hospital: " + (request.getHospitalName() != null && !request.getHospitalName().isBlank() ? request.getHospitalName() : "Not provided") + "\n"
+                + "Status: " + request.getStatus() + "\n"
+                + "Notes: " + (request.getNotes() != null ? request.getNotes() : "—");
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Blood Bank Request Match");
+        alert.setHeaderText("Blood request from " + (request.getRequesterName() != null ? request.getRequesterName() : "requester"));
+        alert.setContentText(details);
+
+        ButtonType accept = new ButtonType("Accept & Reserve Stock");
+        ButtonType complete = new ButtonType("Mark Donation Completed");
+        ButtonType dismiss = new ButtonType("Dismiss");
+
+        if (BloodRequest.STATUS_AWAITING_CONFIRMATION.equalsIgnoreCase(request.getStatus())) {
+            alert.getButtonTypes().setAll(complete, dismiss, ButtonType.CLOSE);
+        } else if (BloodRequest.STATUS_PENDING.equalsIgnoreCase(request.getStatus())
+                || BloodRequest.STATUS_MATCHING.equalsIgnoreCase(request.getStatus())) {
+            alert.getButtonTypes().setAll(accept, dismiss, ButtonType.CLOSE);
+        } else {
+            alert.getButtonTypes().setAll(ButtonType.CLOSE);
+        }
+
+        alert.showAndWait().ifPresent(type -> {
+            if (type == accept) {
+                if (request.getBloodGroup() == null) {
+                    new Alert(Alert.AlertType.ERROR, "This request does not have a valid blood group.").showAndWait();
+                    return;
+                }
+                try {
+                    inventoryDAO.consumeAvailableStock(bloodBankId, request.getBloodGroup(), request.getQuantity());
+                    requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_MATCHING);
+                    loadOverview();
+                    loadRequests();
+                    new Alert(Alert.AlertType.INFORMATION, "Blood bank matched the request and reserved stock.").showAndWait();
+                } catch (Exception ex) {
+                    new Alert(Alert.AlertType.ERROR, ex.getMessage()).showAndWait();
+                }
+            } else if (type == complete) {
+                requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_FULFILLED);
+                loadRequests();
+                loadOverview();
+                new Alert(Alert.AlertType.INFORMATION, "The request has been marked as completed for the blood bank and donor records.").showAndWait();
+            } else if (type == dismiss) {
+                requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_CANCELLED);
+                loadRequests();
+            }
+        });
+    }
 
     private void setupInventoryTable() {
         colInvId.setCellValueFactory(c -> new SimpleIntegerProperty(c.getValue().getInventoryId()).asObject());

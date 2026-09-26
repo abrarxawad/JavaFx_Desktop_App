@@ -4,6 +4,7 @@ import com.lifelink.dao.BloodInventoryDAO;
 import com.lifelink.dao.BloodRequestDAO;
 import com.lifelink.dao.DonationDAO;
 import com.lifelink.dao.UserDAO;
+import com.lifelink.json.JsonDataService;
 import com.lifelink.model.BloodInventory;
 import com.lifelink.model.BloodRequest;
 import com.lifelink.model.User;
@@ -21,17 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-/**
- * Controller for the Admin Dashboard.
- *
- * <p>Manages Users, Blood Requests, and Inventory across the entire system.
- *
- * <p><b>Package:</b> com.lifelink.controller
- */
+
 public class AdminDashboardController extends BaseDashboardController implements Initializable {
 
     // ── FXML Nodes ────────────────────────────────────────────────────────────
@@ -82,14 +78,14 @@ public class AdminDashboardController extends BaseDashboardController implements
     @FXML private TableColumn<BloodInventory, String>  colInvExpiry;
     @FXML private TableColumn<BloodInventory, String>  colInvStatus;
 
-    // ── Dependencies ──────────────────────────────────────────────────────────
+    //Dependencies
 
     private final UserDAO           userDAO      = new UserDAO();
     private final BloodRequestDAO   requestDAO   = new BloodRequestDAO();
     private final BloodInventoryDAO inventoryDAO = new BloodInventoryDAO();
     private final DonationDAO       donationDAO  = new DonationDAO();
 
-    // ── Initialize ────────────────────────────────────────────────────────────
+    // Initialize
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -107,7 +103,7 @@ public class AdminDashboardController extends BaseDashboardController implements
         loadOverviewStats();
     }
 
-    // ── Panel Switching ───────────────────────────────────────────────────────
+    //Panel Switching
 
     @FXML private void showOverview(ActionEvent e)   { switchPanel("overview"); loadOverviewStats(); }
     @FXML private void showUsers(ActionEvent e)      { switchPanel("users"); loadUsers(); }
@@ -131,7 +127,7 @@ public class AdminDashboardController extends BaseDashboardController implements
         }
     }
 
-    // ── Data Loading: Overview ────────────────────────────────────────────────
+    //  Data Loading: Overview
 
     @FXML
     public void loadOverviewStats() {
@@ -154,7 +150,7 @@ public class AdminDashboardController extends BaseDashboardController implements
         Thread t = new Thread(task, "admin-stats"); t.setDaemon(true); t.start();
     }
 
-    // ── Data Loading: Users ───────────────────────────────────────────────────
+    // Data Loading: Users 
 
     @FXML
     public void loadUsers() {
@@ -184,7 +180,6 @@ public class AdminDashboardController extends BaseDashboardController implements
     private void handleDeleteUser(ActionEvent e) {
         User selected = usersTable.getSelectionModel().getSelectedItem();
         if (selected == null) return;
-        // Logic for deletion... (requires delete method in UserDAO)
         logger.info("Attempting to delete user {}", selected.getUsername());
     }
 
@@ -203,7 +198,7 @@ public class AdminDashboardController extends BaseDashboardController implements
         Thread t = new Thread(task, "toggle-status"); t.setDaemon(true); t.start();
     }
 
-    // ── Data Loading: Requests ────────────────────────────────────────────────
+    //  Data Loading: Requests
 
     @FXML
     public void loadRequests() {
@@ -213,10 +208,10 @@ public class AdminDashboardController extends BaseDashboardController implements
                 if ("ALL".equals(filter) || filter == null) {
                     return requestDAO.findAll();
                 } else if ("PENDING".equals(filter) || "MATCHING".equals(filter) || "PARTIALLY_FULFILLED".equals(filter)) {
-                     // Could refine this to filter exactly, doing it simply for now
+                
                     return requestDAO.findPending();
                 } else {
-                    return requestDAO.findAll(); // Simplified fallback
+                    return requestDAO.findAll(); 
                 }
             }
         };
@@ -245,9 +240,8 @@ public class AdminDashboardController extends BaseDashboardController implements
     @FXML
     private void handleUpdateRequestStatus(ActionEvent e) {
         BloodRequest selected = reqTable.getSelectionModel().getSelectedItem();
-        if (selected == null) return;
-        // Real implementation would open a dialog to select new status
-        String newStatus = "FULFILLED"; // Hardcoded for demo
+        if (selected == null) return;  
+        String newStatus = "FULFILLED";
         Task<Void> task = new Task<>() {
             @Override protected Void call() {
                 requestDAO.updateStatus(selected.getRequestId(), newStatus);
@@ -258,7 +252,39 @@ public class AdminDashboardController extends BaseDashboardController implements
         Thread t = new Thread(task, "upd-req"); t.setDaemon(true); t.start();
     }
 
-    // ── Data Loading: Inventory ───────────────────────────────────────────────
+    @FXML
+    private void handleExportJson(ActionEvent e) {
+        Path exportPath = Path.of("data", "exports", "donors.json");
+        JsonDataService.exportDonorsToJson(exportPath);
+        logger.info("Donor export requested: {}", exportPath.toAbsolutePath());
+        new Alert(Alert.AlertType.INFORMATION,
+                "Donor data exported to JSON at: " + exportPath.toAbsolutePath()).showAndWait();
+    }
+
+    @FXML
+    private void handleImportJson(ActionEvent e) {
+        Path importPath = Path.of("data", "imports", "sample-donors.json");
+        try {
+            JsonDataService.importDonorsFromJson(importPath);
+            loadUsers();
+            new Alert(Alert.AlertType.INFORMATION,
+                    "Sample donor JSON imported into SQLite successfully.").showAndWait();
+        } catch (Exception ex) {
+            logger.error("JSON import failed via admin action: {}", ex.getMessage(), ex);
+            new Alert(Alert.AlertType.ERROR,
+                    "JSON import failed: " + ex.getMessage()).showAndWait();
+        }
+    }
+
+    @FXML
+    private void handleExportRequestsJson(ActionEvent e) {
+        Path exportPath = Path.of("data", "exports", "blood-requests.json");
+        JsonDataService.exportBloodRequestsToJson(exportPath);
+        new Alert(Alert.AlertType.INFORMATION,
+                "Blood request export completed: " + exportPath.toAbsolutePath()).showAndWait();
+    }
+
+    //Data Loading: Inventor
 
     @FXML
     public void loadInventory() {
