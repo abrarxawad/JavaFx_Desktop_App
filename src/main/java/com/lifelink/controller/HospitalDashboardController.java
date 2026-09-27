@@ -1,5 +1,7 @@
 package com.lifelink.controller;
 
+import com.lifelink.api.DirectoryApiService;
+import com.lifelink.api.DonorSearchApiService;
 import com.lifelink.api.HospitalApiService;
 import com.lifelink.api.HospitalDTO;
 import com.lifelink.api.LocationApiService;
@@ -7,7 +9,9 @@ import com.lifelink.api.NominatimLocationDTO;
 import com.lifelink.dao.BloodRequestDAO;
 import com.lifelink.model.BloodGroup;
 import com.lifelink.model.BloodRequest;
+import com.lifelink.model.Donor;
 import com.lifelink.model.User;
+import com.lifelink.util.HaversineCalculator;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -43,16 +47,31 @@ public class HospitalDashboardController extends BaseDashboardController impleme
     @FXML private VBox emergencyPanel;
     @FXML private VBox historyPanel;
     @FXML private VBox nearbyFacilitiesPanel;
+    @FXML private VBox donorSearchPanel;
 
     // Search nearby hospitals
     @FXML private TextField searchLocationField;
     @FXML private Label nearbyFacilitiesStatus;
     @FXML private TableView<HospitalDTO> facilityTable;
+
+    // Compatible donor search
+    @FXML private ComboBox<String> donorSearchGroup;
+    @FXML private TextField donorSearchLocationField;
+    @FXML private TextField donorSearchRadiusField;
+    @FXML private Label donorSearchStatus;
+    @FXML private TableView<Donor> donorSearchTable;
+    @FXML private TableColumn<Donor, String> colDonorName;
+    @FXML private TableColumn<Donor, String> colDonorGroup;
+    @FXML private TableColumn<Donor, String> colDonorCity;
+    @FXML private TableColumn<Donor, String> colDonorPhone;
+    @FXML private TableColumn<Donor, Double> colDonorDistance;
+    @FXML private TableColumn<Donor, String> colDonorEligibility;
     @FXML private TableColumn<HospitalDTO, String> colFacilityName;
     @FXML private TableColumn<HospitalDTO, String> colFacilityAddress;
     @FXML private TableColumn<HospitalDTO, Double> colFacilityLatitude;
     @FXML private TableColumn<HospitalDTO, Double> colFacilityLongitude;
     @FXML private TableColumn<HospitalDTO, Double> colFacilityDistance;
+    @FXML private TableColumn<HospitalDTO, String> colFacilityType;
 
     // Stats
     @FXML private Label statTotal;
@@ -80,10 +99,18 @@ public class HospitalDashboardController extends BaseDashboardController impleme
     @FXML private TableColumn<BloodRequest, String>   colHNotes;
     @FXML private TableColumn<BloodRequest, String>   colHDate;
 
+    @FXML private TableView<DirectoryApiService.DirectoryEntry> donorDirectoryTable;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryName;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryGroup;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryCity;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryPhone;
+
     private final BloodRequestDAO requestDAO = new BloodRequestDAO();
     private final ExecutorService apiExecutor = Executors.newFixedThreadPool(2);
     private final LocationApiService locationApiService = new LocationApiService();
     private final HospitalApiService hospitalApiService = new HospitalApiService();
+    private final DonorSearchApiService donorSearchApiService = new DonorSearchApiService();
+    private final DirectoryApiService directoryApiService = new DirectoryApiService();
 
     //  Initialize 
 
@@ -93,6 +120,8 @@ public class HospitalDashboardController extends BaseDashboardController impleme
         if (user != null) topbarUserName.setText(user.getUsername());
 
         emerGroup.getSelectionModel().select(0);
+        donorSearchGroup.getSelectionModel().select(0);
+        donorSearchRadiusField.setText("25");
         emerPriority.getSelectionModel().select("EMERGENCY");
 
         histTable.setRowFactory(tv -> {
@@ -107,7 +136,19 @@ public class HospitalDashboardController extends BaseDashboardController impleme
 
         setupTable();
         setupFacilityTable();
+        setupCompatibleDonorTable();
+        setupDirectoryTable();
+        donorDirectoryTable.setRowFactory(tv -> {
+            TableRow<DirectoryApiService.DirectoryEntry> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getClickCount() == 2) {
+                    openDirectoryContactDialog(row.getItem());
+                }
+            });
+            return row;
+        });
         loadStats();
+        loadDonorDirectory();
     }
 
     //  Panel switching 
@@ -116,17 +157,21 @@ public class HospitalDashboardController extends BaseDashboardController impleme
     @FXML private void showEmergency(ActionEvent e)  { switchPanel("emergency"); resetForm(); }
     @FXML private void showHistory(ActionEvent e)    { switchPanel("history"); loadHistory(); }
     @FXML private void showNearbyFacilities(ActionEvent e) { switchPanel("nearby"); }
+    @FXML private void showCompatibleDonors(ActionEvent e) { switchPanel("donors"); }
+    @FXML private void showAllDonors(ActionEvent e) { loadDonorDirectory(); }
 
     private void switchPanel(String which) {
         overviewPanel.setVisible(false);
         emergencyPanel.setVisible(false);
         historyPanel.setVisible(false);
         nearbyFacilitiesPanel.setVisible(false);
+        donorSearchPanel.setVisible(false);
         switch (which) {
             case "overview"   -> { overviewPanel.setVisible(true);  topbarTitle.setText("Hospital Dashboard"); }
             case "emergency"  -> { emergencyPanel.setVisible(true); topbarTitle.setText("Submit Blood Request"); }
             case "history"    -> { historyPanel.setVisible(true);   topbarTitle.setText("Request History"); }
             case "nearby"     -> { nearbyFacilitiesPanel.setVisible(true); topbarTitle.setText("Nearby Hospitals"); }
+            case "donors"     -> { donorSearchPanel.setVisible(true); topbarTitle.setText("Compatible Donors"); }
         }
     }
 
@@ -250,7 +295,143 @@ public class HospitalDashboardController extends BaseDashboardController impleme
         colFacilityLatitude.setCellValueFactory(c -> new SimpleDoubleProperty(c.getValue().getLatitude()).asObject());
         colFacilityLongitude.setCellValueFactory(c -> new SimpleDoubleProperty(c.getValue().getLongitude()).asObject());
         colFacilityDistance.setCellValueFactory(c -> new SimpleDoubleProperty(c.getValue().getDistanceKm()).asObject());
+        colFacilityType.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getType()));
         facilityTable.setItems(FXCollections.observableArrayList());
+    }
+
+    private void setupCompatibleDonorTable() {
+        colDonorName.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getDisplayName()));
+        colDonorGroup.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().getBloodGroup() != null ? c.getValue().getBloodGroup().getLabel() : "—"));
+        colDonorCity.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getCity() != null ? c.getValue().getCity() : "—"));
+        colDonorPhone.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getPhone() != null ? c.getValue().getPhone() : "—"));
+        colDonorEligibility.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getEligibilityStatus() != null ? c.getValue().getEligibilityStatus() : "UNKNOWN"));
+        colDonorDistance.setCellValueFactory(c -> {
+            Donor donor = c.getValue();
+            if (donor == null || donor.getLatitude() == null || donor.getLongitude() == null) {
+                return new SimpleDoubleProperty(Double.NaN).asObject();
+            }
+            String locationText = donorSearchLocationField.getText() == null ? "" : donorSearchLocationField.getText().trim();
+            if (locationText.isBlank()) {
+                return new SimpleDoubleProperty(Double.NaN).asObject();
+            }
+            try {
+                NominatimLocationDTO geocode = locationApiService.geocodeLocation(locationText);
+                double distanceKm = HaversineCalculator.calculateDistanceKm(
+                        (double) geocode.getLatitude(), (double) geocode.getLongitude(),
+                        (double) donor.getLatitude(), (double) donor.getLongitude());
+                return new SimpleDoubleProperty(distanceKm).asObject();
+            } catch (Exception ignored) {
+                return new SimpleDoubleProperty(Double.NaN).asObject();
+            }
+        });
+        donorSearchTable.setItems(FXCollections.observableArrayList());
+    }
+
+    private void setupDirectoryTable() {
+        colDirectoryName.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getName()));
+        colDirectoryGroup.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getBloodGroup()));
+        colDirectoryCity.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getCity()));
+        colDirectoryPhone.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getPhone()));
+        donorDirectoryTable.setItems(FXCollections.observableArrayList());
+    }
+
+    private void loadDonorDirectory() {
+        Task<List<DirectoryApiService.DirectoryEntry>> task = new Task<>() {
+            @Override
+            protected List<DirectoryApiService.DirectoryEntry> call() throws Exception {
+                return directoryApiService.fetchDonors();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            List<DirectoryApiService.DirectoryEntry> records = task.getValue();
+            donorDirectoryTable.setItems(FXCollections.observableArrayList(records));
+            if (records == null || records.isEmpty()) {
+                overviewStatus.setText("No donor records found in the REST API dataset.");
+            } else {
+                overviewStatus.setText("Loaded " + records.size() + " donors from the LifeLink API directory.");
+            }
+        });
+
+        task.setOnFailed(e -> {
+            logger.error("Failed to load donor directory", task.getException());
+            overviewStatus.setText("Unable to load donor directory from the API right now.");
+        });
+
+        apiExecutor.submit(task);
+    }
+
+    private void openDirectoryContactDialog(DirectoryApiService.DirectoryEntry donor) {
+        if (donor == null) return;
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Donor Contact Details");
+        alert.setHeaderText(donor.getName());
+        alert.setContentText("Blood Group: " + donor.getBloodGroup() + "\n"
+                + "City: " + donor.getCity() + "\n"
+                + "Phone: " + donor.getPhone());
+        alert.showAndWait();
+    }
+
+    @FXML
+    private void handleSearchCompatibleDonors(ActionEvent event) {
+        String bloodGroup = donorSearchGroup.getValue();
+        String location = donorSearchLocationField.getText() == null ? "" : donorSearchLocationField.getText().trim();
+        String radiusText = donorSearchRadiusField.getText() == null ? "25" : donorSearchRadiusField.getText().trim();
+
+        if (bloodGroup == null || bloodGroup.isBlank()) {
+            donorSearchStatus.setStyle("-fx-text-fill: #fca5a5;");
+            donorSearchStatus.setText("Select a blood group before searching.");
+            return;
+        }
+
+        double radiusKm;
+        try {
+            radiusKm = Double.parseDouble(radiusText);
+            if (!Double.isFinite(radiusKm) || radiusKm <= 0) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException ex) {
+            donorSearchStatus.setStyle("-fx-text-fill: #fca5a5;");
+            donorSearchStatus.setText("Radius must be a positive number in kilometres.");
+            return;
+        }
+
+        donorSearchStatus.setStyle("-fx-text-fill: #cbd5e1;");
+        donorSearchStatus.setText("Searching compatible donors...");
+
+        Task<List<Donor>> task = new Task<>() {
+            @Override
+            protected List<Donor> call() throws Exception {
+                return donorSearchApiService.searchCompatibleDonors(bloodGroup, location, radiusKm);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            List<Donor> results = task.getValue();
+            donorSearchTable.setItems(FXCollections.observableArrayList(results));
+            if (results == null || results.isEmpty()) {
+                donorSearchStatus.setStyle("-fx-text-fill: #fca5a5;");
+                donorSearchStatus.setText("No compatible donors were found for this blood group and search area.");
+            } else {
+                donorSearchStatus.setStyle("-fx-text-fill: #86efac;");
+                donorSearchStatus.setText("Found " + results.size() + " compatible donors.");
+            }
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            donorSearchStatus.setStyle("-fx-text-fill: #fca5a5;");
+            if (ex instanceof IllegalArgumentException) {
+                donorSearchStatus.setText(ex.getMessage());
+            } else {
+                donorSearchStatus.setText("Donor search is unavailable right now. Please try again later.");
+            }
+            logger.error("Compatible donor search failed", ex);
+        });
+
+        apiExecutor.submit(task);
     }
 
     @FXML

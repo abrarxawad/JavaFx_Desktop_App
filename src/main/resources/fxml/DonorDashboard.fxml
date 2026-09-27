@@ -108,6 +108,26 @@
                     </HBox>
                 </VBox>
 
+                <VBox styleClass="stat-card" spacing="12">
+                    <Label text="Community Directory" styleClass="section-header"/>
+                    <HBox spacing="12">
+                        <Button text="👥 View All Donors" styleClass="btn-primary" onAction="#showAllDonors"/>
+                        <Button text="👥 View All Recipients" styleClass="btn-secondary" onAction="#showAllRecipients"/>
+                    </HBox>
+                    <TableView fx:id="directoryTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                        <columns>
+                            <TableColumn fx:id="colDirectoryName" text="Name" prefWidth="200"/>
+                            <TableColumn fx:id="colDirectoryType" text="Role" prefWidth="120"/>
+                            <TableColumn fx:id="colDirectoryGroup" text="Blood Group" prefWidth="140"/>
+                            <TableColumn fx:id="colDirectoryCity" text="City" prefWidth="150"/>
+                            <TableColumn fx:id="colDirectoryPhone" text="Phone" prefWidth="180"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="Choose a directory list to view the demo dataset from the API." style="-fx-text-fill:#4a5568;"/>
+                        </placeholder>
+                    </TableView>
+                </VBox>
+
                 <!-- Status message -->
                 <Label fx:id="overviewStatus" text="" wrapText="true" style="-fx-text-fill:#8892b0; -fx-font-size:13;"/>
             </VBox>

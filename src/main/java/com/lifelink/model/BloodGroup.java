@@ -3,6 +3,11 @@ package com.lifelink.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * All supported human blood groups.
  *
@@ -33,6 +38,64 @@ public enum BloodGroup {
     @JsonValue
     public String getLabel() {
         return label;
+    }
+
+    /**
+     * Checks whether this donor group can donate to the target recipient group.
+     * This follows the real transfusion rules used in blood bank matching.
+     */
+    public boolean canDonateTo(BloodGroup recipientBloodGroup) {
+        if (recipientBloodGroup == null) {
+            return false;
+        }
+        return getCompatibleRecipientGroups().contains(recipientBloodGroup);
+    }
+
+    /**
+     * Returns the recipient blood groups this donor group can safely serve.
+     */
+    public Set<BloodGroup> getCompatibleRecipientGroups() {
+        return switch (this) {
+            case O_NEGATIVE -> EnumSet.allOf(BloodGroup.class);
+            case O_POSITIVE -> EnumSet.of(O_POSITIVE, A_POSITIVE, B_POSITIVE);
+            case A_NEGATIVE -> EnumSet.of(A_NEGATIVE, A_POSITIVE, AB_NEGATIVE, AB_POSITIVE);
+            case A_POSITIVE -> EnumSet.of(A_POSITIVE, AB_POSITIVE);
+            case B_NEGATIVE -> EnumSet.of(B_NEGATIVE, B_POSITIVE, AB_NEGATIVE, AB_POSITIVE);
+            case B_POSITIVE -> EnumSet.of(B_POSITIVE, AB_POSITIVE);
+            case AB_NEGATIVE -> EnumSet.of(AB_NEGATIVE, AB_POSITIVE);
+            case AB_POSITIVE -> EnumSet.of(AB_POSITIVE);
+        };
+    }
+
+    /**
+     * Returns all donor blood groups that can donate to the given recipient group.
+     */
+    public static Set<BloodGroup> getCompatibleDonorGroups(BloodGroup recipientBloodGroup) {
+        if (recipientBloodGroup == null) {
+            return EnumSet.noneOf(BloodGroup.class);
+        }
+
+        Set<BloodGroup> compatible = EnumSet.noneOf(BloodGroup.class);
+        for (BloodGroup donorGroup : values()) {
+            if (donorGroup.canDonateTo(recipientBloodGroup)) {
+                compatible.add(donorGroup);
+            }
+        }
+        return compatible;
+    }
+
+    /**
+     * Convenience alias used by matching logic and REST-style compatibility lookups.
+     */
+    public static List<BloodGroup> getCompatibleDonorBloodGroups(BloodGroup recipientBloodGroup) {
+        return new ArrayList<>(getCompatibleDonorGroups(recipientBloodGroup));
+    }
+
+    /**
+     * Checks donor compatibility using the real blood-group rules.
+     */
+    public static boolean isCompatibleDonor(BloodGroup donorGroup, BloodGroup recipientBloodGroup) {
+        return donorGroup != null && recipientBloodGroup != null && donorGroup.canDonateTo(recipientBloodGroup);
     }
 
     /**

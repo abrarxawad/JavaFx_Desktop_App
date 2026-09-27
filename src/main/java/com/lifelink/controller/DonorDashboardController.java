@@ -1,5 +1,6 @@
 package com.lifelink.controller;
 
+import com.lifelink.api.DirectoryApiService;
 import com.lifelink.dao.BloodRequestDAO;
 import com.lifelink.dao.DonationDAO;
 import com.lifelink.dao.DonorDAO;
@@ -86,6 +87,13 @@ public class DonorDashboardController extends BaseDashboardController implements
     @FXML private TableColumn<BloodRequest, String>  colReqBy;
     @FXML private TableColumn<BloodRequest, String>  colReqDate;
 
+    @FXML private TableView<DirectoryApiService.DirectoryEntry> directoryTable;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryName;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryType;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryGroup;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryCity;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryPhone;
+
     // ── Dependencies ──────────────────────────────────────────────────────────
 
     private static final Logger logger = LoggerFactory.getLogger(DonorDashboardController.class);
@@ -93,6 +101,7 @@ public class DonorDashboardController extends BaseDashboardController implements
     private final DonorDAO         donorDAO     = new DonorDAO();
     private final DonationDAO      donationDAO  = new DonationDAO();
     private final BloodRequestDAO  requestDAO   = new BloodRequestDAO();
+    private final DirectoryApiService directoryApiService = new DirectoryApiService();
 
     private Donor currentDonor;
 
@@ -107,6 +116,7 @@ public class DonorDashboardController extends BaseDashboardController implements
 
         setupHistoryTable();
         setupRequestsTable();
+        setupDirectoryTable();
         requestsTable.setRowFactory(tv -> {
             TableRow<BloodRequest> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -116,7 +126,17 @@ public class DonorDashboardController extends BaseDashboardController implements
             });
             return row;
         });
+        directoryTable.setRowFactory(tv -> {
+            TableRow<DirectoryApiService.DirectoryEntry> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getClickCount() == 2) {
+                    openDirectoryContactDialog(row.getItem());
+                }
+            });
+            return row;
+        });
         loadDonorData();
+        loadDirectory("donors");
     }
 
     // ── Panel switching ───────────────────────────────────────────────────────
@@ -125,6 +145,8 @@ public class DonorDashboardController extends BaseDashboardController implements
     @FXML private void showProfile(ActionEvent e)   { switchPanel("profile"); }
     @FXML private void showHistory(ActionEvent e)   { switchPanel("history"); loadHistory(); }
     @FXML private void showRequests(ActionEvent e)  { switchPanel("requests"); loadRequests(); }
+    @FXML private void showAllDonors(ActionEvent e) { loadDirectory("donors"); }
+    @FXML private void showAllRecipients(ActionEvent e) { loadDirectory("recipients"); }
 
     private void switchPanel(String which) {
         overviewPanel.setVisible(false);
@@ -177,6 +199,7 @@ public class DonorDashboardController extends BaseDashboardController implements
 
     private void updateStatCards() {
         if (currentDonor == null) return;
+        currentDonor.refreshEligibilityStatus();
         statTotalDonations.setText(String.valueOf(currentDonor.getTotalDonations()));
         statEligibility.setText(currentDonor.getEligibilityStatus() != null ? currentDonor.getEligibilityStatus() : "UNKNOWN");
         statLastDonation.setText(currentDonor.getLastDonationDate() != null
@@ -244,6 +267,58 @@ public class DonorDashboardController extends BaseDashboardController implements
         colReqBy.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getRequesterName()));
         colReqDate.setCellValueFactory(c -> new SimpleStringProperty(
                 c.getValue().getRequestDate() != null ? c.getValue().getRequestDate().toLocalDate().toString() : "—"));
+    }
+
+    private void setupDirectoryTable() {
+        colDirectoryName.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getName()));
+        colDirectoryType.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getType()));
+        colDirectoryGroup.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getBloodGroup()));
+        colDirectoryCity.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getCity()));
+        colDirectoryPhone.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getPhone()));
+        directoryTable.setItems(FXCollections.observableArrayList());
+    }
+
+    private void loadDirectory(String type) {
+        Task<List<DirectoryApiService.DirectoryEntry>> task = new Task<>() {
+            @Override
+            protected List<DirectoryApiService.DirectoryEntry> call() throws Exception {
+                if ("recipients".equalsIgnoreCase(type)) {
+                    return directoryApiService.fetchRecipients();
+                }
+                return directoryApiService.fetchDonors();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            List<DirectoryApiService.DirectoryEntry> entries = task.getValue();
+            directoryTable.setItems(FXCollections.observableArrayList(entries));
+            if (entries == null || entries.isEmpty()) {
+                overviewStatus.setText("No records were returned from the LifeLink demo dataset.");
+            } else {
+                overviewStatus.setText("Loaded " + entries.size() + " records from the REST API demo dataset.");
+            }
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            logger.error("Failed to load directory data", ex);
+            overviewStatus.setText("Unable to load the directory from the REST API right now.");
+        });
+
+        Thread t = new Thread(task, "load-directory"); t.setDaemon(true); t.start();
+    }
+
+    private void openDirectoryContactDialog(DirectoryApiService.DirectoryEntry entry) {
+        if (entry == null) return;
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Directory Contact Details");
+        alert.setHeaderText(entry.getName());
+        alert.setContentText("Role: " + entry.getType() + "\n"
+                + "Blood Group: " + entry.getBloodGroup() + "\n"
+                + "City: " + entry.getCity() + "\n"
+                + "Phone: " + entry.getPhone());
+        alert.showAndWait();
     }
 
     private void openRequestActionDialog(BloodRequest request) {
@@ -325,6 +400,7 @@ public class DonorDashboardController extends BaseDashboardController implements
         currentDonor.setCity(editCity.getText().trim());
         currentDonor.setAddress(editAddress.getText().trim());
         currentDonor.setAvailable(editAvailability.isSelected());
+        currentDonor.refreshEligibilityStatus();
 
         Task<Void> task = new Task<>() {
             @Override protected Void call() {

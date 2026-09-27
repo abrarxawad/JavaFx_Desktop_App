@@ -116,13 +116,15 @@ public class RegisterController {
                 switch (role) {
                     case DONOR -> {
                         String donorBloodGroup = BloodGroup.fromLabel(bloodGroupValue).name();
-                        ps = conn.prepareStatement("INSERT INTO donors (user_id, first_name, last_name, blood_group, date_of_birth, gender, phone) VALUES (?, 'Unknown', 'User', ?, '2000-01-01', 'Other', '')");
+                        ps = conn.prepareStatement("INSERT INTO donors (user_id, first_name, last_name, blood_group, date_of_birth, gender, phone) VALUES (?, ?, '', ?, '2000-01-01', 'Other', '')");
                         ps.setInt(1, userId);
-                        ps.setString(2, donorBloodGroup);
+                        ps.setString(2, username);
+                        ps.setString(3, donorBloodGroup);
                     }
                     case RECIPIENT -> {
-                        ps = conn.prepareStatement("INSERT INTO recipients (user_id, first_name, last_name, blood_group, phone) VALUES (?, 'Unknown', 'User', 'O_POSITIVE', '')");
+                        ps = conn.prepareStatement("INSERT INTO recipients (user_id, first_name, last_name, blood_group, phone) VALUES (?, ?, '', 'O_POSITIVE', '')");
                         ps.setInt(1, userId);
+                        ps.setString(2, username);
                     }
                     case BLOOD_BANK -> {
                         ps = conn.prepareStatement("INSERT INTO blood_banks (user_id, name) VALUES (?, ?)");

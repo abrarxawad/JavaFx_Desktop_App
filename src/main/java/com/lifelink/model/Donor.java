@@ -76,11 +76,35 @@ public class Donor extends User {
      * @param minDaysBetweenDonations normally 56
      */
     public boolean isEligibleToDonatee(int minDaysBetweenDonations) {
+        refreshEligibilityStatus();
         if (!"ELIGIBLE".equalsIgnoreCase(eligibilityStatus)) return false;
         if (!available) return false;
         if (lastDonationDate == null) return true; // never donated — eligible
         long daysSince = LocalDate.now().toEpochDay() - lastDonationDate.toEpochDay();
         return daysSince >= minDaysBetweenDonations;
+    }
+
+    /**
+     * Rebuilds the donor eligibility state from the actual availability and last donation date.
+     * This prevents stale UI values and stale database rows when a new donation is recorded.
+     */
+    public void refreshEligibilityStatus() {
+        if (!available) {
+            eligibilityStatus = "INELIGIBLE";
+            return;
+        }
+        if (lastDonationDate == null) {
+            eligibilityStatus = "ELIGIBLE";
+            return;
+        }
+
+        long daysSince = LocalDate.now().toEpochDay() - lastDonationDate.toEpochDay();
+        eligibilityStatus = (daysSince >= 90) ? "ELIGIBLE" : "INELIGIBLE";
+    }
+
+    public boolean isAvailableForDonation() {
+        refreshEligibilityStatus();
+        return available && "ELIGIBLE".equalsIgnoreCase(eligibilityStatus);
     }
 
     // ── Getters & Setters ─────────────────────────────────────────────────────

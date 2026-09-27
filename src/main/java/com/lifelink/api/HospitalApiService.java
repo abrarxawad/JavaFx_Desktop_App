@@ -88,7 +88,7 @@ public class HospitalApiService {
                             element.getLatitude(),
                             element.getLongitude(),
                             distanceKm,
-                            element.getType() != null ? element.getType() : "Health Facility"
+                            element.getFacilityType()
                     );
                 })
                 .sorted(Comparator.comparingDouble(HospitalDTO::getDistanceKm))

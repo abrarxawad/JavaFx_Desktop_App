@@ -126,6 +126,45 @@ public class DonationDAO {
         }
     }
 
+    // ── Update ────────────────────────────────────────────────────────────────
+    
+    public void updateStatusByRequest(int requestId, String newStatus) {
+        String sql = "UPDATE donations SET status = ? WHERE request_id = ?";
+        try (var ctx = dbManager.getConnectionWrapper()) {
+            Connection conn = ctx.getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, newStatus);
+                ps.setInt(2, requestId);
+                ps.executeUpdate();
+                logger.info("Updated donation status to '{}' for request_id={}", newStatus, requestId);
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating donation status by request: " + e.getMessage(), e);
+        }
+    }
+
+    public List<DonationRecord> findByRequest(int requestId) {
+        List<DonationRecord> list = new ArrayList<>();
+        String sql = """
+            SELECT d.*, bb.name as bank_name 
+            FROM donations d 
+            LEFT JOIN blood_banks bb ON d.blood_bank_id = bb.blood_bank_id 
+            WHERE d.request_id = ?
+            """;
+        try (var ctx = dbManager.getConnectionWrapper()) {
+            Connection conn = ctx.getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, requestId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) list.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error fetching donations by request: " + e.getMessage(), e);
+        }
+        return list;
+    }
+
     // ── Row mapping ───────────────────────────────────────────────────────────
 
     private DonationRecord mapRow(ResultSet rs) throws SQLException {
