@@ -1,6 +1,9 @@
 package com.lifelink.controller;
 
+import com.lifelink.api.DirectoryApiService;
 import com.lifelink.dao.BloodRequestDAO;
+import com.lifelink.dao.DonationDAO;
+import com.lifelink.dao.DonorDAO;
 import com.lifelink.model.BloodGroup;
 import com.lifelink.model.BloodRequest;
 import com.lifelink.model.User;
@@ -66,8 +69,17 @@ public class RecipientDashboardController extends BaseDashboardController implem
     @FXML private TableColumn<BloodRequest, String>  colNotes;
     @FXML private TableColumn<BloodRequest, String>  colDate;
 
+    @FXML private TableView<DirectoryApiService.DirectoryEntry> donorDirectoryTable;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryName;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryGroup;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryCity;
+    @FXML private TableColumn<DirectoryApiService.DirectoryEntry, String> colDirectoryPhone;
+
     // ── Dependencies 
     private final BloodRequestDAO requestDAO = new BloodRequestDAO();
+    private final DirectoryApiService directoryApiService = new DirectoryApiService();
+    private final DonationDAO donationDAO = new DonationDAO();
+    private final DonorDAO donorDAO = new DonorDAO();
 
     // ── Initialise 
     @Override
@@ -87,15 +99,27 @@ public class RecipientDashboardController extends BaseDashboardController implem
             });
             return row;
         });
+        donorDirectoryTable.setRowFactory(tv -> {
+            TableRow<DirectoryApiService.DirectoryEntry> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getClickCount() == 2) {
+                    openDirectoryContactDialog(row.getItem());
+                }
+            });
+            return row;
+        });
 
         setupTable();
+        setupDirectoryTable();
         loadStats();
+        loadDonorDirectory();
     }
 
     //  Panel switching 
     @FXML private void showOverview(ActionEvent e)    { switchPanel("overview"); loadStats(); }
     @FXML private void showNewRequest(ActionEvent e)  { switchPanel("new"); resetForm(); }
     @FXML private void showMyRequests(ActionEvent e)  { switchPanel("requests"); loadRequests(); }
+    @FXML private void showDonorDirectory(ActionEvent e) { loadDonorDirectory(); }
 
     private void switchPanel(String which) {
         overviewPanel.setVisible(false);
@@ -240,6 +264,52 @@ public class RecipientDashboardController extends BaseDashboardController implem
                 c.getValue().getRequestDate() != null ? c.getValue().getRequestDate().toLocalDate().toString() : "—"));
     }
 
+    private void setupDirectoryTable() {
+        colDirectoryName.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getName()));
+        colDirectoryGroup.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getBloodGroup()));
+        colDirectoryCity.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getCity()));
+        colDirectoryPhone.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getPhone()));
+        donorDirectoryTable.setItems(FXCollections.observableArrayList());
+    }
+
+    private void loadDonorDirectory() {
+        Task<List<DirectoryApiService.DirectoryEntry>> task = new Task<>() {
+            @Override
+            protected List<DirectoryApiService.DirectoryEntry> call() throws Exception {
+                return directoryApiService.fetchDonors();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            List<DirectoryApiService.DirectoryEntry> records = task.getValue();
+            donorDirectoryTable.setItems(FXCollections.observableArrayList(records));
+            if (records == null || records.isEmpty()) {
+                overviewStatus.setText("No donor records found in the demo dataset.");
+            } else {
+                overviewStatus.setText("Loaded " + records.size() + " donors from the LifeLink donor directory.");
+            }
+        });
+
+        task.setOnFailed(e -> {
+            logger.error("Failed to load donor directory", task.getException());
+            overviewStatus.setText("Unable to load donor directory from the API right now.");
+        });
+
+        Thread t = new Thread(task, "load-donor-directory"); t.setDaemon(true); t.start();
+    }
+
+    private void openDirectoryContactDialog(DirectoryApiService.DirectoryEntry donor) {
+        if (donor == null) return;
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Donor Contact Details");
+        alert.setHeaderText(donor.getName());
+        alert.setContentText("Blood Group: " + donor.getBloodGroup() + "\n"
+                + "City: " + donor.getCity() + "\n"
+                + "Phone: " + donor.getPhone());
+        alert.showAndWait();
+    }
+
     //  Helpers 
 
     private void showFormError(String msg) {
@@ -280,10 +350,19 @@ public class RecipientDashboardController extends BaseDashboardController implem
             alert.showAndWait().ifPresent(type -> {
                 if (type == accept) {
                     requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_FULFILLED);
+                    donationDAO.updateStatusByRequest(request.getRequestId(), "COMPLETED");
+                    
+                    // Increment donor's donation count
+                    List<DonationDAO.DonationRecord> relatedDonations = donationDAO.findByRequest(request.getRequestId());
+                    for (DonationDAO.DonationRecord dr : relatedDonations) {
+                        donorDAO.incrementDonationStats(dr.donorId, dr.donationDate);
+                    }
+                    
                     loadRequests();
                     loadStats();
                 } else if (type == dismiss) {
                     requestDAO.updateStatus(request.getRequestId(), BloodRequest.STATUS_CANCELLED);
+                    donationDAO.updateStatusByRequest(request.getRequestId(), "FAILED");
                     loadRequests();
                     loadStats();
                 }

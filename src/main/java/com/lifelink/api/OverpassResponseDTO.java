@@ -141,6 +141,14 @@ public class OverpassResponseDTO {
             return address.length() > 0 ? address.toString() : "Nearby healthcare facility";
         }
 
+        public String getFacilityType() {
+            String amenity = tags.get("amenity");
+            if (amenity != null && !amenity.isBlank()) {
+                return amenity.substring(0, 1).toUpperCase() + amenity.substring(1).replace('_', ' ');
+            }
+            return "Health Facility";
+        }
+
         @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Center {
             private double lat;

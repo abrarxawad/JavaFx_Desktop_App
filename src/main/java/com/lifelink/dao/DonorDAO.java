@@ -4,14 +4,17 @@ import com.lifelink.database.DatabaseManager;
 import com.lifelink.exception.DatabaseException;
 import com.lifelink.model.BloodGroup;
 import com.lifelink.model.Donor;
+import com.lifelink.util.HaversineCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Data Access Object for the {@code donors} table.
@@ -173,6 +176,55 @@ public class DonorDAO {
         return list;
     }
 
+    /**
+     * Finds donors that can donate to a recipient blood group, optionally within a search radius.
+     * This is the DAO-side equivalent of a compatible-donor lookup used by REST and dashboard matching.
+     */
+    public List<Donor> findCompatibleDonors(BloodGroup recipientBloodGroup,
+                                           Double latitude,
+                                           Double longitude,
+                                           Double radiusKm) {
+        if (recipientBloodGroup == null) {
+            return List.of();
+        }
+
+        Set<BloodGroup> compatibleGroups = BloodGroup.getCompatibleDonorGroups(recipientBloodGroup);
+        if (compatibleGroups.isEmpty()) {
+            return List.of();
+        }
+
+        List<Donor> matches = new ArrayList<>();
+        for (Donor donor : findAll()) {
+            if (donor.getBloodGroup() == null || !compatibleGroups.contains(donor.getBloodGroup())) {
+                continue;
+            }
+            donor.refreshEligibilityStatus();
+            if (!donor.isAvailable() || !"ELIGIBLE".equalsIgnoreCase(donor.getEligibilityStatus())) {
+                continue;
+            }
+            if (latitude != null && longitude != null && radiusKm != null) {
+                if (!donor.hasLocation()) {
+                    continue;
+                }
+                double distanceKm = HaversineCalculator.calculateDistanceKm(
+                        latitude, longitude,
+                        donor.getLatitude(), donor.getLongitude());
+                if (distanceKm > radiusKm) {
+                    continue;
+                }
+            }
+            matches.add(donor);
+        }
+
+        if (latitude != null && longitude != null && radiusKm != null) {
+            matches.sort(Comparator.comparingDouble(donor -> donor.hasLocation()
+                    ? HaversineCalculator.calculateDistanceKm(latitude, longitude, donor.getLatitude(), donor.getLongitude())
+                    : Double.MAX_VALUE));
+        }
+
+        return matches;
+    }
+
     public boolean existsByUserId(int userId) {
         try (var ctx = dbManager.getConnectionWrapper()) {
             Connection conn = ctx.getConnection();
@@ -200,6 +252,7 @@ public class DonorDAO {
     // ── Update ────────────────────────────────────────────────────────────────
 
     public void update(Donor donor) {
+        donor.refreshEligibilityStatus();
         try (var ctx = dbManager.getConnectionWrapper()) {
             Connection conn = ctx.getConnection();
             try (PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
@@ -220,6 +273,33 @@ public class DonorDAO {
             }
         } catch (SQLException e) {
             throw new DatabaseException("Error updating donor: " + e.getMessage(), e);
+        }
+    }
+
+    public void incrementDonationStats(int donorId, LocalDate donationDate) {
+        String sql = """
+            UPDATE donors 
+            SET total_donations = total_donations + 1, 
+                last_donation_date = CASE 
+                    WHEN last_donation_date IS NULL THEN ? 
+                    WHEN ? > last_donation_date THEN ? 
+                    ELSE last_donation_date 
+                END
+            WHERE donor_id = ?
+            """;
+        try (var ctx = dbManager.getConnectionWrapper()) {
+            Connection conn = ctx.getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                String dateStr = (donationDate != null) ? donationDate.toString() : LocalDate.now().toString();
+                ps.setString(1, dateStr);
+                ps.setString(2, dateStr);
+                ps.setString(3, dateStr);
+                ps.setInt(4, donorId);
+                ps.executeUpdate();
+                logger.info("Incremented donation stats for donor_id={} (date={})", donorId, dateStr);
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating donor donation stats: " + e.getMessage(), e);
         }
     }
 
@@ -255,6 +335,7 @@ public class DonorDAO {
         d.setAvailable(rs.getInt("availability") == 1);
         d.setEligibilityStatus(rs.getString("eligibility_status"));
         d.setTotalDonations(rs.getInt("total_donations"));
+        d.refreshEligibilityStatus();
         return d;
     }
 }

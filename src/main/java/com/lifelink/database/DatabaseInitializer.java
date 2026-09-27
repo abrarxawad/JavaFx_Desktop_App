@@ -263,6 +263,7 @@ public class DatabaseInitializer {
                     VALUES (1, 'City Central Blood Bank', '123 Medical Ave', 'Dhaka', '01700000001', 'ACTIVE');
                     """);
 
+                DemoDataBootstrap.ensureDatasetLoaded();
                 logger.info("All database tables initialized successfully (SQLite).");
             }
         } catch (Exception e) {

@@ -1,5 +1,6 @@
 package com.lifelink;
 
+import com.lifelink.api.LifeLinkApiServer;
 import com.lifelink.database.DatabaseManager;
 import com.lifelink.json.JsonDataService;
 import com.lifelink.util.ThemeManager;
@@ -47,8 +48,19 @@ public class Main extends Application {
             // ── Initialize SQLite Database Tables ────────────────────────────
             com.lifelink.database.DatabaseInitializer.initialize();
 
-            // ── Demonstrate JSON import/export and API simulation ─────────────
-            JsonDataService.runJsonDemo();
+            // ── Demonstrate JSON import/export and API simulation (in background) ─
+            Thread demoThread = new Thread(() -> {
+                try {
+                    JsonDataService.runJsonDemo();
+                } catch (Exception ex) {
+                    logger.warn("JSON demo failed: {}", ex.getMessage());
+                }
+            }, "json-demo-thread");
+            demoThread.setDaemon(true);
+            demoThread.start();
+
+            // ── Start the embedded REST API for JavaFX/HTTP integration ───────
+            LifeLinkApiServer.start();
 
             // ── Load Login FXML ──────────────────────────────────────────────
             // FXMLLoader reads the FXML file and instantiates the controller.
@@ -86,6 +98,11 @@ public class Main extends Application {
     @Override
     public void stop() {
         logger.info("Shutting down LifeLink...");
+        try {
+            LifeLinkApiServer.stopServer();
+        } catch (Exception e) {
+            logger.warn("Error during REST API shutdown: {}", e.getMessage());
+        }
         // Shut down the database connection pool
         try {
             DatabaseManager.getInstance().shutdown();

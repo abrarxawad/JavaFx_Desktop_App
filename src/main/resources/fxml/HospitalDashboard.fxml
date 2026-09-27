@@ -27,6 +27,7 @@
             <Button text="📊  Dashboard"         styleClass="sidebar-nav-btn,sidebar-nav-btn-active" maxWidth="Infinity" onAction="#showOverview"/>
             <Button text="🚨  Emergency Request" styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showEmergency"/>
             <Button text="📋  Request History"   styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showHistory"/>
+            <Button text="🩸  Compatible Donors" styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showCompatibleDonors"/>
             <Button text="🏥  Nearby Hospitals"  styleClass="sidebar-nav-btn" maxWidth="Infinity" onAction="#showNearbyFacilities"/>
 
             <Region VBox.vgrow="ALWAYS"/>
@@ -88,7 +89,19 @@
                     <HBox spacing="12">
                         <Button text="🚨 Submit Emergency Request" styleClass="btn-primary"   onAction="#showEmergency"/>
                         <Button text="📋 View All Requests"        styleClass="btn-secondary" onAction="#showHistory"/>
+                        <Button text="👥 View All Donors"         styleClass="btn-secondary" onAction="#showAllDonors"/>
                     </HBox>
+                    <TableView fx:id="donorDirectoryTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                        <columns>
+                            <TableColumn fx:id="colDirectoryName" text="Donor" prefWidth="200"/>
+                            <TableColumn fx:id="colDirectoryGroup" text="Blood Group" prefWidth="140"/>
+                            <TableColumn fx:id="colDirectoryCity" text="City" prefWidth="150"/>
+                            <TableColumn fx:id="colDirectoryPhone" text="Phone" prefWidth="180"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="Load the donor directory to browse the API-backed demo dataset." style="-fx-text-fill:#4a5568;"/>
+                        </placeholder>
+                    </TableView>
                 </VBox>
 
                 <Label fx:id="overviewStatus" text="" wrapText="true" style="-fx-text-fill:#8892b0;"/>
@@ -189,6 +202,53 @@
                 </TableView>
             </VBox>
 
+            <!-- ── COMPATIBLE DONOR SEARCH ── -->
+            <VBox fx:id="donorSearchPanel" spacing="18" visible="false">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="Compatible Donor Search" style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#f0f4ff;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Search" styleClass="btn-primary" onAction="#handleSearchCompatibleDonors"/>
+                </HBox>
+
+                <VBox styleClass="stat-card" spacing="12" maxWidth="980">
+                    <Label text="Find donors who can safely donate to the requested blood group" styleClass="section-header"/>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <ComboBox fx:id="donorSearchGroup" promptText="Blood group" styleClass="combo-box" minWidth="180">
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="A_POSITIVE"/>
+                                    <String fx:value="A_NEGATIVE"/>
+                                    <String fx:value="B_POSITIVE"/>
+                                    <String fx:value="B_NEGATIVE"/>
+                                    <String fx:value="AB_POSITIVE"/>
+                                    <String fx:value="AB_NEGATIVE"/>
+                                    <String fx:value="O_POSITIVE"/>
+                                    <String fx:value="O_NEGATIVE"/>
+                                </FXCollections>
+                            </items>
+                        </ComboBox>
+                        <TextField fx:id="donorSearchLocationField" promptText="Enter a city or place such as Khulna" styleClass="form-field" HBox.hgrow="ALWAYS"/>
+                        <TextField fx:id="donorSearchRadiusField" promptText="Radius km" styleClass="form-field" minWidth="120"/>
+                        <Button text="🔎 Search" styleClass="btn-primary" onAction="#handleSearchCompatibleDonors"/>
+                    </HBox>
+                    <Label fx:id="donorSearchStatus" text="Select a blood group and optional location to search compatible donors." wrapText="true" style="-fx-text-fill:#cbd5e1;"/>
+                </VBox>
+
+                <TableView fx:id="donorSearchTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="colDonorName" text="Donor" prefWidth="200"/>
+                        <TableColumn fx:id="colDonorGroup" text="Group" prefWidth="90"/>
+                        <TableColumn fx:id="colDonorCity" text="City" prefWidth="120"/>
+                        <TableColumn fx:id="colDonorPhone" text="Phone" prefWidth="140"/>
+                        <TableColumn fx:id="colDonorDistance" text="Distance (km)" prefWidth="120"/>
+                        <TableColumn fx:id="colDonorEligibility" text="Eligibility" prefWidth="120"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No compatible donors found yet. Search a location to begin." style="-fx-text-fill:#4a5568;"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+
             <!-- ── NEARBY HOSPITALS API SEARCH ── -->
             <VBox fx:id="nearbyFacilitiesPanel" spacing="18" visible="false">
                 <HBox alignment="CENTER_LEFT" spacing="12">
@@ -212,7 +272,8 @@
                         <TableColumn fx:id="colFacilityAddress" text="Address" prefWidth="260"/>
                         <TableColumn fx:id="colFacilityLatitude" text="Latitude" prefWidth="90"/>
                         <TableColumn fx:id="colFacilityLongitude" text="Longitude" prefWidth="95"/>
-                        <TableColumn fx:id="colFacilityDistance" text="Distance (km)" prefWidth="120"/>
+                        <TableColumn fx:id="colFacilityDistance" text="Distance (km)" prefWidth="100"/>
+                        <TableColumn fx:id="colFacilityType" text="Type" prefWidth="120"/>
                     </columns>
                     <placeholder>
                         <Label text="No facilities loaded yet. Search a location to begin." style="-fx-text-fill:#4a5568;"/>
